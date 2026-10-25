@@ -1368,6 +1368,7 @@
     const clean = {
       when: escapeHtml(run.when.slice(0, 19)),
       drill: escapeHtml(run.drill),
+      tier: run.tier === 'executive' ? 'executive' : 'clerical',
       outcome: escapeHtml(run.outcome),
       perfect: run.perfect,
     };
@@ -1390,6 +1391,7 @@
     runs.unshift({
       when: new Date().toISOString().slice(0, 19),
       drill: state.drill,
+      tier: state.tier,
       offered: state.items.length,
       attempted: summary.attempted,
       points: summary.points,
@@ -1413,11 +1415,12 @@
       return;
     }
     let html = '<table class="board"><thead><tr>' +
-      '<th scope="col">When</th><th scope="col">Drill</th><th scope="col">Attempted</th>' +
+      '<th scope="col">When</th><th scope="col">Grade</th><th scope="col">Drill</th><th scope="col">Attempted</th>' +
       '<th scope="col">Points</th><th scope="col">Perfect</th><th scope="col">Time</th>' +
       '<th scope="col">Seed</th></tr></thead><tbody>';
     runs.forEach(function (run) {
       html += `<tr><td class="mono">${run.when.replace('T', ' ')}</td>` +
+        `<td>${run.tier === 'executive' ? 'Executive' : 'Clerical'}</td>` +
         `<td>${LABELS[run.drill] || run.drill}</td>` +
         `<td class="num">${run.attempted}/${run.offered}</td>` +
         `<td class="num">${run.points}/${run.max}</td>` +
@@ -1432,11 +1435,11 @@
   function exportCsv() {
     const runs = loadRuns();
     if (!runs.length) return;
-    const header = ['timestamp', 'drill', 'offered', 'attempted', 'points', 'max_points',
+    const header = ['timestamp', 'grade', 'drill', 'offered', 'attempted', 'points', 'max_points',
       'perfect', 'seconds_used', 'seed', 'outcome'];
     const lines = [header.join(',')];
     runs.forEach(function (run) {
-      lines.push([run.when, run.drill, run.offered, run.attempted, run.points, run.max,
+      lines.push([run.when, run.tier, run.drill, run.offered, run.attempted, run.points, run.max,
         run.perfect, run.seconds, run.seed, run.outcome].join(','));
     });
     const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });

@@ -436,7 +436,7 @@ window.PASSAGES = [
       {
         statement: `A board member who declares a connection must withdraw from the board.`,
         key: 'C',
-        why: 'Withdrawal is stated only for candidates who are related; other connections are not covered.',
+        why: 'The passage requires connections to be declared but says nothing about a board member withdrawing.',
       },
     ],
   },

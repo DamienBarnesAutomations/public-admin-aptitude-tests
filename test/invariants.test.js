@@ -116,6 +116,27 @@ for (let seed = 1; seed <= SEEDS; seed += 1) {
   check(paper.length === 26, `seed ${seed}: verbal paper has ${paper.length} questions`);
 }
 
+/* ---- executive tier ----------------------------------------------------- */
+
+const execPrompts = {};
+for (let seed = 1; seed <= SEEDS; seed += 1) {
+  const paper = PAAT.makeNumericalPaper(new PAAT.Rng(seed), 36, true);
+  check(paper.length === 36, `seed ${seed}: executive paper has ${paper.length} questions`);
+  paper.forEach(function (item, number) {
+    const where = `exec seed ${seed} q${number + 1} "${item.prompt}"`;
+    check(item.options.length === 5 && new Set(item.options).size === 5, `${where}: options ${item.options}`);
+    check(item.answer >= 0 && item.answer < 5, `${where}: answer index`);
+    item.options.forEach(function (option) {
+      check(!/NaN|undefined|Infinity|-/.test(option), `${where}: bad option "${option}"`);
+    });
+    execPrompts[item.prompt] = (execPrompts[item.prompt] || 0) + 1;
+  });
+}
+check(Object.keys(execPrompts).length === 12, `expected 12 executive question types, saw ${Object.keys(execPrompts).length}`);
+for (let seed = 1; seed <= SEEDS; seed += 1) {
+  check(PAAT.makeVerbalPaper(new PAAT.Rng(seed), 59).length === 59, `seed ${seed}: executive verbal paper`);
+}
+
 /* ---- checking / categorising ------------------------------------------- */
 
 for (let seed = 1; seed <= 200; seed += 1) {
