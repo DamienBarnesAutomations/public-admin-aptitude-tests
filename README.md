@@ -28,11 +28,14 @@ timings.
 |---|---|---|---|
 | **Numerical** | 36 | 30:00 | The same shape as the clerical paper, but every item needs at least two operations: uplift then spend, salary then on-costs, capacity then backlog. |
 | **Verbal** | 59 | 30:00 | Same format, tighter pace: 30 seconds a statement instead of 42. |
+| **Job simulation** | 25 | 35:00 | A workplace scenario and five possible actions. You pick the one you would most likely take; the mark depends on how appropriate it is. |
 
 The self-assessment system gives Executive and Administrative **identical**
 numerical and verbal papers — same counts, same timings — so they are one tier
-here rather than two. The only thing that differs between the grades is the job
-simulation, which is not built (see below).
+here rather than two. The job simulation is the one place the grades differ:
+25 questions in 35 minutes at Executive level, 18 in 30 at Administrative. The
+Executive paper is the one built here; use Half or Short for something closer to
+the Administrative length.
 
 ## How to use it
 
@@ -73,7 +76,9 @@ uploaded. Export gives you a CSV. Clearing is permanent.
   the columns you happened to leave alone.
 
 **Categorising** is two points a question, one for the area and one for the
-reference category. **Numerical and verbal** are one point a question.
+reference category. **Numerical and verbal** are one point a question. **Job
+simulation** is four points a question, awarded by how appropriate your chosen
+action is.
 
 ## The verbal bank
 
@@ -86,13 +91,31 @@ judgement rather than an official answer sheet. A 59-item Executive paper uses
 almost the whole bank, so that tier will feel repetitive before the clerical
 one does.
 
-## What is not built
+## The job simulation key
 
-The **job simulation**, which is the third test at Executive and Administrative
-level (25 questions / 35 minutes, and 18 / 30, respectively). It is not here
-because the mark scheme would be invented: each scenario offers five actions and
-the real test scores them by appropriateness, and there is no published key to
-work from. Training against a made-up key is worse than not training.
+`scenarios.js` holds twenty-eight scenarios, each with five ranked actions. The
+marking is my judgement, not a published key — PAS scores the real items by
+appropriateness and does not release the marks, and there is no official answer
+sheet to work from.
+
+To make the ranking defensible rather than arbitrary, every scenario uses the
+same rubric:
+
+| Mark | What it represents |
+|---|---|
+| 4 | Does the right thing, within your authority, and tells the right person. |
+| 3 | Procedurally sound, but defers to someone else or stops short of fixing it. |
+| 2 | Well intentioned, incomplete: treats the symptom, or acts without informing. |
+| 1 | Avoids the issue, or applies a rule without addressing the situation. |
+| 0 | Hides the problem, acts outside authority, or shifts blame. |
+
+Every scenario has exactly one action at each mark, and the actions are shuffled
+per paper. You score whatever the chosen action is worth, so picking the
+second-best is worth 3 of 4 rather than nothing. Feedback mode shows the best
+action and the reasoning.
+
+If you disagree with a ranking, edit the file. It is plain data, and your
+judgement of a workplace scenario is not obviously worse than mine.
 
 ## Deploying to GitHub Pages
 
@@ -140,6 +163,9 @@ second implementation of the same arithmetic. The browser version is canonical.
 - **The scoring models are training designs.** PAS does not publish how the
   checking test is marked.
 - **Verbal keys are mine.** See above.
+- **The job simulation marks are mine.** The rubric is stated and applied
+  consistently, but it is a reconstruction, not PAS's scoring. Treat the
+  rankings as a reasonable colleague's opinion, not as an answer key.
 - **Numerical range is narrower than the real papers.** Eight block types —
   monthly volumes, unit costs, ticket revenue, hours and pay for the clerical
   tier; budget uplift, staffing with on-costs, case-processing capacity and

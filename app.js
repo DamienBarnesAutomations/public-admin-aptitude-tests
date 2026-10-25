@@ -808,6 +808,31 @@
     return items;
   }
 
+  /* ---------------------------------------------------- job simulation */
+
+  function makeJobSimPaper(rng, total) {
+    const bank = window.SCENARIOS || [];
+    if (!bank.length) throw new Error('scenario file missing');
+    const chosen = rng.sample(bank, Math.min(total, bank.length));
+
+    return chosen.map(function (scenario) {
+      const actions = rng.sample(scenario.actions, scenario.actions.length);
+      let best = 0;
+      actions.forEach(function (action, index) {
+        if (action.mark > actions[best].mark) best = index;
+      });
+
+      return {
+        contextId: 'sim-' + scenario.id,
+        contextHtml: '<div class="passage"><h3>' + escapeHtml(scenario.title) + '</h3><p>' +
+          escapeHtml(scenario.text) + '</p></div>',
+        actions: actions,
+        bestIndex: best,
+        why: scenario.why,
+      };
+    });
+  }
+
   /* ---------------------------------------------------------------- state */
 
   const TIERS = {
@@ -818,9 +843,9 @@
     },
     executive: {
       label: 'Executive / Administrative',
-      note: 'Three tests: numerical, verbal and a job simulation. The first two are here; ' +
-        'the simulation is not built.',
-      drills: ['numerical', 'verbal'],
+      note: 'Three tests: numerical, verbal and a job simulation. The simulation is 25 ' +
+        'questions in 35 minutes at Executive level; Administrative sits 18 in 30.',
+      drills: ['numerical', 'verbal', 'jobsim'],
     },
   };
 
@@ -834,6 +859,7 @@
     executive: {
       numerical: { full: { n: 36, s: 1800 }, half: { n: 18, s: 900 }, short: { n: 8, s: 400 } },
       verbal: { full: { n: 59, s: 1800 }, half: { n: 30, s: 900 }, short: { n: 12, s: 360 } },
+      jobsim: { full: { n: 25, s: 2100 }, half: { n: 12, s: 1050 }, short: { n: 8, s: 600 } },
     },
   };
 
@@ -842,6 +868,7 @@
     categorising: 'Categorising',
     numerical: 'Numerical',
     verbal: 'Verbal',
+    jobsim: 'Job simulation',
   };
   const STORE_KEY = 'paat.runs.v1';
 
@@ -1035,13 +1062,34 @@
     $('#hint').textContent = 'Press T, F or C.';
   }
 
+  function renderJobSim(item) {
+    let html = '<p class="prompt">Which one of these would you be most likely to do?</p>' +
+      '<div class="choices" id="choices">';
+    item.actions.forEach(function (action, index) {
+      html += '<button type="button" class="option" data-index="' + index + '">' +
+        '<b>' + 'ABCDE'[index] + '</b><span>' + escapeHtml(action.text) + '</span></button>';
+    });
+    html += '</div>';
+    $('#question').innerHTML = html;
+    $('#choices').addEventListener('click', function (event) {
+      const button = event.target.closest('.option');
+      if (!button) return;
+      button.blur();
+      submitJobSim(Number(button.dataset.index));
+    });
+    $('#hint').textContent = 'Press A\u2013E for the action you would most likely take.';
+  }
+
   function renderQuestion() {
     const item = state.items[state.index];
     $('#run-count').textContent = `Question ${state.index + 1} of ${state.items.length}`;
-    if (state.drill === 'numerical' || state.drill === 'verbal') renderContext(item);
+    if (state.drill === 'numerical' || state.drill === 'verbal' || state.drill === 'jobsim') {
+      renderContext(item);
+    }
     if (state.drill === 'checking') renderChecking(item);
     else if (state.drill === 'numerical') renderNumerical(item);
     else if (state.drill === 'verbal') renderVerbal(item);
+    else if (state.drill === 'jobsim') renderJobSim(item);
     else renderCategorising(item);
   }
 
@@ -1182,6 +1230,27 @@
     });
   }
 
+  function submitJobSim(index) {
+    if (state.finished || state.locked) return;
+    if (performance.now() > state.deadline) { finish('time'); return; }
+    const item = state.items[state.index];
+    const action = item.actions[index];
+    recordRow({
+      points: action.mark,
+      max: 4,
+      perfect: action.mark === 4,
+      columns: {},
+      answer: 'ABCDE'[index],
+      expected: 'ABCDE'[item.bestIndex] + ' \u2014 ' + item.actions[item.bestIndex].text,
+      why: item.why,
+    });
+  }
+
+  function submitChoice(index) {
+    if (state.drill === 'jobsim') submitJobSim(index);
+    else submitNumerical(index);
+  }
+
   function markFeedback(row) {
     const hint = $('#hint');
     hint.classList.add(row.perfect ? 'ok' : 'bad');
@@ -1243,6 +1312,8 @@
         }
       } else if (drill === 'numerical') {
         state.items = makeNumericalPaper(rng, settings.n, state.tier === 'executive');
+      } else if (drill === 'jobsim') {
+        state.items = makeJobSimPaper(rng, settings.n);
       } else {
         state.items = makeVerbalPaper(rng, settings.n);
       }
@@ -1523,11 +1594,11 @@
         event.preventDefault();
         pushEntry(key.toUpperCase());
       }
-    } else if (state.drill === 'numerical') {
+    } else if (state.drill === 'numerical' || state.drill === 'jobsim') {
       const index = 'abcde'.indexOf(key);
       if (key.length === 1 && index >= 0) {
         event.preventDefault();
-        submitNumerical(index);
+        submitChoice(index);
       }
     } else if (state.drill === 'verbal') {
       if (key === 't') { event.preventDefault(); submitVerbal('T'); }
@@ -1585,6 +1656,7 @@
       makeCatItem: makeCatItem,
       makeNumericalPaper: makeNumericalPaper,
       makeVerbalPaper: makeVerbalPaper,
+      makeJobSimPaper: makeJobSimPaper,
     };
   }
 })();
