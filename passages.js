@@ -100,9 +100,9 @@ window.PASSAGES = [
         why: '60% of €50,000 is €30,000, which is capped at the €25,000 maximum.',
       },
       {
-        statement: 'A group with four years remaining on its lease may apply.',
+        statement: 'A group that only leases its property, with four years remaining on the lease, may apply.',
         key: 'F',
-        why: 'At least five years must remain.',
+        why: 'A group that does not own the property needs a lease with at least five years remaining.',
       },
       {
         statement: 'The grant may be used to replace a broken-down van.',
@@ -110,9 +110,9 @@ window.PASSAGES = [
         why: 'The scheme does not fund the purchase of vehicles.',
       },
       {
-        statement: 'A group that received a grant three years ago is eligible to apply.',
+        statement: 'A group is not excluded from applying merely because it received a grant three years ago.',
         key: 'T',
-        why: 'Only groups funded in the previous two years are excluded.',
+        why: 'The exclusion applies only to groups funded in the previous two years.',
       },
     ],
   },
@@ -273,8 +273,8 @@ window.PASSAGES = [
       },
       {
         statement: 'A request made by a former employee falls outside the one-month response period.',
-        key: 'C',
-        why: 'The passage does not distinguish between current and former employees.',
+        key: 'F',
+        why: 'The one-month period applies to requests from any individual, and the passage makes no exception for former employees.',
       },
     ],
   },

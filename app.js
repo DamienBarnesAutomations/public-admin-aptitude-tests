@@ -257,7 +257,7 @@
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June'];
 
   function euro(cents) {
-    return '\u20ac' + (cents / 100).toLocaleString('en-IE', {
+    return (cents < 0 ? '-' : '') + '\u20ac' + (Math.abs(cents) / 100).toLocaleString('en-IE', {
       minimumFractionDigits: 2, maximumFractionDigits: 2,
     });
   }
@@ -413,7 +413,9 @@
   function blockTickets(rng) {
     const standard = rng.int(25, 70) * 50;
     const concession = Math.round(standard * 0.55 / 50) * 50;
-    const standardSold = rng.int(120, 640);
+    /* Concession revenue is at most 0.55 x 300 / 200 = 82.5% of standard, so
+     * "standard exceeds concession" always holds. */
+    const standardSold = rng.int(200, 640);
     const concessionSold = rng.int(40, 300);
     const standardRevenue = standard * standardSold;
     const concessionRevenue = concession * concessionSold;
@@ -450,12 +452,12 @@
           correct: euro(standardRevenue - concessionRevenue),
           decoy: function (k) {
             const variants = [
-              concessionRevenue - standardRevenue,
+              concessionRevenue,
               totalRevenue,
               standardRevenue,
               Math.round((standardRevenue - concessionRevenue) * 1.2),
             ];
-            return euro(Math.abs(variants[k % variants.length]));
+            return euro(variants[k % variants.length]);
           },
         },
         {
@@ -512,7 +514,7 @@
           },
         },
         {
-          prompt: 'What is the additional pay for ' + overtimeHours + ' hours of overtime?',
+          prompt: 'What is the total pay for ' + overtimeHours + ' hours of overtime?',
           correct: euro(overtime),
           decoy: function (k) {
             const variants = [rate * overtimeHours, rate * 2 * overtimeHours, overtime - rate, Math.round(overtime * 0.9)];
@@ -636,6 +638,7 @@
     ticker: null,
     finished: false,
     locked: false,
+    feedbackTimer: null,
     selected: new Set(),
     clean: false,
     entry: [],
@@ -822,6 +825,7 @@
   /* -------------------------------------------------------------- answers */
 
   function applyColumn(key) {
+    if (state.finished || state.locked) return;
     if (key === 'N') {
       state.clean = true;
       state.selected.clear();
@@ -914,7 +918,8 @@
     if (state.feedback) {
       state.locked = true;
       markFeedback(row);
-      window.setTimeout(function () {
+      state.feedbackTimer = window.setTimeout(function () {
+        state.feedbackTimer = null;
         state.locked = false;
         advance();
       }, row.why ? 1600 : 900);
@@ -986,6 +991,7 @@
       window.clearInterval(state.ticker);
       state.ticker = null;
     }
+    clearFeedbackTimer();
     const settings = LENGTHS[state.length][drill];
     const seed = options && options.seed != null ? options.seed : pickSeed();
     const rng = new Rng(seed);
@@ -1050,9 +1056,17 @@
     $('#run-title').focus();
   }
 
+  function clearFeedbackTimer() {
+    if (state.feedbackTimer) {
+      window.clearTimeout(state.feedbackTimer);
+      state.feedbackTimer = null;
+    }
+  }
+
   function finish(reason) {
     if (state.finished) return;
     state.finished = true;
+    clearFeedbackTimer();
     if (state.ticker) {
       window.clearInterval(state.ticker);
       state.ticker = null;
@@ -1114,11 +1128,35 @@
 
   /* ----------------------------------------------------------- scoreboard */
 
+  const RUN_NUMBERS = ['offered', 'attempted', 'points', 'max', 'seconds', 'seed'];
+
+  function isWellFormedRun(run) {
+    return !!run && typeof run === 'object' &&
+      typeof run.when === 'string' &&
+      typeof run.drill === 'string' &&
+      typeof run.outcome === 'string' &&
+      typeof run.perfect === 'number' &&
+      RUN_NUMBERS.every(function (field) { return Number.isFinite(run[field]); });
+  }
+
+  /* Stored text is rendered into innerHTML and a CSV, so only known-safe
+   * shapes get through: escaped strings, finite numbers. */
+  function cleanRun(run) {
+    const clean = {
+      when: escapeHtml(run.when.slice(0, 19)),
+      drill: escapeHtml(run.drill),
+      outcome: escapeHtml(run.outcome),
+      perfect: run.perfect,
+    };
+    RUN_NUMBERS.forEach(function (field) { clean[field] = run[field]; });
+    return clean;
+  }
+
   function loadRuns() {
     try {
       const raw = window.localStorage.getItem(STORE_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed) ? parsed.filter(isWellFormedRun).map(cleanRun) : [];
     } catch (error) {
       return [];
     }
@@ -1228,6 +1266,7 @@
   document.addEventListener('keydown', function (event) {
     if (state.view !== 'run' || state.finished || state.locked) return;
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.repeat) return;
 
     const key = event.key.toLowerCase();
 
