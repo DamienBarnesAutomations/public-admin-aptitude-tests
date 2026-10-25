@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public Admin Aptitude Tests</title>
+<meta name="description" content="Timed practice drills for the Irish civil service Clerical Officer aptitude tests: transcription checking and two-stage categorising.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1014'/%3E%3Cpath d='M8 17l5 5 11-12' fill='none' stroke='%237aa2f7' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+
+  <!-- ---------------------------------------------------------------- menu -->
+  <section id="view-menu" class="view">
+    <header class="masthead">
+      <h1>Public Admin Aptitude Tests</h1>
+      <p class="lede">
+        Timed drills for the two Clerical Officer tests that commercial practice banks
+        do not cover properly. Both reward a fixed scan order and a steady pace, not
+        cleverness.
+      </p>
+    </header>
+
+    <div class="options">
+      <label class="field">
+        <span>Length</span>
+        <select id="opt-length">
+          <option value="full" selected>Full &mdash; real timings</option>
+          <option value="half">Half</option>
+          <option value="short">Short &mdash; 10 questions</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Seed <em>(blank = random)</em></span>
+        <input id="opt-seed" type="text" inputmode="numeric" autocomplete="off" placeholder="random">
+      </label>
+      <label class="field field-check">
+        <input id="opt-feedback" type="checkbox">
+        <span>Show the answer after each question</span>
+      </label>
+    </div>
+
+    <div class="cards">
+      <article class="card">
+        <h2>Checking</h2>
+        <p class="meta" id="meta-checking">46 questions &middot; 8:00</p>
+        <p>Two panels of the same register. Mark every column that contains a transcription error, or claim the record is clean.</p>
+        <button class="btn primary" data-start="checking">Start checking</button>
+      </article>
+
+      <article class="card">
+        <h2>Categorising</h2>
+        <p class="meta" id="meta-categorising">40 questions &middot; 10:00</p>
+        <p>Two lookups per question: invoice area, then purchase reference category. The tables never change mid-test.</p>
+        <button class="btn primary" data-start="categorising">Start categorising</button>
+      </article>
+    </div>
+
+    <p class="menu-foot">
+      <button class="btn link" id="open-board">Scoreboard</button>
+      <span class="sep">/</span>
+      <span class="fine">Times and formats follow the publicjobs self-assessment system.</span>
+    </p>
+  </section>
+
+  <!-- ----------------------------------------------------------------- run -->
+  <section id="view-run" class="view hidden" aria-labelledby="run-title">
+    <header class="runbar">
+      <h2 id="run-title" class="run-title" tabindex="-1"></h2>
+      <p class="run-count" id="run-count" aria-live="polite"></p>
+      <p class="clock" id="run-clock" aria-hidden="true">0:00</p>
+    </header>
+
+    <div id="tables" class="tables" hidden></div>
+    <div id="question" class="question"></div>
+    <p id="hint" class="hint" aria-live="polite"></p>
+  </section>
+
+  <!-- ------------------------------------------------------------- results -->
+  <section id="view-results" class="view hidden" aria-labelledby="results-title">
+    <h2 id="results-title" tabindex="-1">Result</h2>
+    <div id="results-body"></div>
+    <div class="actions">
+      <button class="btn primary" id="again-same">Retry this paper</button>
+      <button class="btn" id="again-new">New paper</button>
+      <button class="btn" id="to-menu">Menu</button>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- scoreboard -->
+  <section id="view-board" class="view hidden" aria-labelledby="board-title">
+    <h2 id="board-title" tabindex="-1">Scoreboard</h2>
+    <p class="fine">Stored in this browser only. Nothing is uploaded anywhere.</p>
+    <div id="board-body"></div>
+    <div class="actions">
+      <button class="btn" id="export-csv">Export CSV</button>
+      <button class="btn danger" id="clear-board">Clear</button>
+      <button class="btn" id="board-to-menu">Menu</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <p>
+    Independent practice tool. Not affiliated with the Public Appointments Service
+    or <span class="mono">publicjobs.ie</span>. Formats are reconstructed from the
+    published self-assessment system; the competition booklet governs the real thing.
+  </p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
