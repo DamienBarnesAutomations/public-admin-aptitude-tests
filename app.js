@@ -525,15 +525,231 @@
     };
   }
 
-  const NUMERICAL_BLOCKS = [blockVolumes, blockUnitCosts, blockTickets, blockPay];
+  /* Executive tier: multi-step items. Each question needs at least two
+   * operations, which is the real difference from the clerical paper. */
 
-  function makeNumericalPaper(rng, total) {
+  function blockBudget(rng) {
+    const base = rng.int(120, 900) * 100000;
+    const uplift = rng.int(3, 14);
+    const revised = base + Math.round((base * uplift) / 100);
+    const share = rng.int(70, 97);
+    const spent = Math.round((revised * share) / 100);
+    const unspent = revised - spent;
+    const shareOfBase = (spent / base) * 100;
+    const actualShare = (spent / revised) * 100;
+
+    const html = dataTable('Budget line', ['Item', 'Amount'], [
+      ['Original allocation', euro(base)],
+      ['Uplift', uplift + '%'],
+      ['Amount spent', euro(spent)],
+    ], [false, true]);
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'What is the revised allocation after the uplift?',
+          correct: euro(revised),
+          decoy: function (k) {
+            const variants = [
+              base + Math.round((base * uplift) / 50),
+              Math.round(base * (1 + uplift / 10)),
+              Math.round(revised * 0.9),
+              Math.round(revised * 1.05),
+            ];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'How much of the revised allocation remains unspent?',
+          correct: euro(unspent),
+          decoy: function (k) {
+            const variants = [revised, spent, revised - base, Math.round(unspent * 0.9)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What percentage of the revised allocation was spent, to one decimal place?',
+          correct: actualShare.toFixed(1) + '%',
+          decoy: function (k) {
+            const variants = [
+              shareOfBase.toFixed(1) + '%',
+              (100 - actualShare).toFixed(1) + '%',
+              (actualShare * 0.9).toFixed(1) + '%',
+              (actualShare + 6).toFixed(1) + '%',
+            ];
+            return variants[k % variants.length];
+          },
+        },
+      ],
+    };
+  }
+
+  function blockStaffing(rng) {
+    const staffA = rng.int(8, 40);
+    const salaryA = rng.int(28, 42) * 100000;
+    const staffB = rng.int(3, 15);
+    const salaryB = rng.int(44, 68) * 100000;
+    const onCost = rng.int(12, 22);
+    const totalA = staffA * salaryA;
+    const payroll = totalA + staffB * salaryB;
+    const loaded = payroll + Math.round((payroll * onCost) / 100);
+    const gap = Math.round(((salaryB - salaryA) * (100 + onCost)) / 100);
+
+    const html = dataTable('Staffing', ['Grade', 'Staff', 'Salary per head'], [
+      ['Grade A', String(staffA), euro(salaryA)],
+      ['Grade B', String(staffB), euro(salaryB)],
+    ], [false, true, true]) +
+      '<p class="key-note">Employer on-costs of ' + onCost + '% apply on top of salary.</p>';
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'What is the total salary cost for Grade A, before on-costs?',
+          correct: euro(totalA),
+          decoy: function (k) {
+            const variants = [(staffA - 1) * salaryA, (staffA + 1) * salaryA,
+              Math.round(totalA * 0.9), Math.round(totalA * 1.1)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What is the total payroll cost for both grades, including on-costs?',
+          correct: euro(loaded),
+          decoy: function (k) {
+            const variants = [payroll, Math.round(loaded * 0.9), Math.round(loaded * 1.1),
+              totalA + Math.round((totalA * onCost) / 100)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What is the difference in cost per head between the two grades, ' +
+            'including on-costs?',
+          correct: euro(gap),
+          decoy: function (k) {
+            const variants = [salaryB - salaryA, Math.round(gap * 0.9),
+              Math.round(gap * 1.2), Math.round((salaryB - salaryA) * (onCost / 100))];
+            return euro(variants[k % variants.length]);
+          },
+        },
+      ],
+    };
+  }
+
+  function blockProcessing(rng) {
+    const perDay = rng.int(40, 160);
+    const days = rng.int(10, 22);
+    let intake = rng.int(300, 1200);
+    const backlog = rng.int(200, 900);
+    const capacity = perDay * days;
+
+    while (backlog + intake <= capacity) intake += 150;
+    const outstanding = backlog + intake - capacity;
+    const clearDays = Math.ceil(outstanding / perDay);
+
+    const html = dataTable('Case processing', ['Item', 'Value'], [
+      ['Cases handled per working day', String(perDay)],
+      ['Working days in the period', String(days)],
+      ['Opening backlog', String(backlog)],
+      ['New cases received', String(intake)],
+    ], [false, true]);
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'How many cases could be handled during the period?',
+          correct: whole(capacity),
+          decoy: function (k) {
+            const variants = [perDay * (days - 1), perDay * (days + 1),
+              Math.round(capacity * 0.9), backlog + intake];
+            return whole(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'How many cases remain outstanding at the end of the period?',
+          correct: whole(outstanding),
+          decoy: function (k) {
+            const variants = [capacity, backlog, intake, outstanding + perDay];
+            return whole(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'At the same rate, how many working days would it take to clear the ' +
+            'outstanding cases? Give a whole number of days.',
+          correct: whole(clearDays),
+          decoy: function (k) {
+            const variants = [clearDays - 1, clearDays + 1, Math.round(outstanding / (perDay * 2)),
+              Math.round(days / 2)];
+            return whole(Math.max(0, variants[k % variants.length]));
+          },
+        },
+      ],
+    };
+  }
+
+  function blockDiscount(rng) {
+    const unit = rng.int(4, 40) * 25;
+    const qty = rng.int(60, 400);
+    const tier = qty >= 250 ? 15 : qty >= 120 ? 10 : 5;
+    const gross = unit * qty;
+    const discount = Math.round((gross * tier) / 100);
+    const net = gross - discount;
+    const perUnit = Math.round(net / qty);
+
+    const html = dataTable('Order', ['Item', 'Value'], [
+      ['Unit price', euro(unit)],
+      ['Quantity ordered', String(qty)],
+    ], [false, true]) +
+      '<p class="key-note">Quantity bands: 60\u2013119 units 5% &middot; ' +
+      '120\u2013249 units 10% &middot; 250 units or more 15%.</p>';
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'What is the gross cost of the order, before any discount?',
+          correct: euro(gross),
+          decoy: function (k) {
+            const variants = [unit * (qty - 10), unit * (qty + 10),
+              Math.round(gross * 0.9), Math.round(gross * 1.1)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What is the value of the quantity discount?',
+          correct: euro(discount),
+          decoy: function (k) {
+            const variants = [net, Math.round((gross * 0.2)), Math.round(gross * 0.05),
+              Math.round(discount * 2)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What is the effective cost per unit after the discount?',
+          correct: euro(perUnit),
+          decoy: function (k) {
+            const variants = [unit, perUnit + 25, Math.round(perUnit * 0.9),
+              Math.round(perUnit * 1.1)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+      ],
+    };
+  }
+
+  const NUMERICAL_BLOCKS = [blockVolumes, blockUnitCosts, blockTickets, blockPay];
+  const EXECUTIVE_BLOCKS = [blockBudget, blockStaffing, blockProcessing, blockDiscount];
+
+  function makeNumericalPaper(rng, total, hard) {
+    const pool = hard ? EXECUTIVE_BLOCKS : NUMERICAL_BLOCKS;
     const items = [];
     let guard = 0;
 
     while (items.length < total && guard < 80) {
       guard += 1;
-      const block = rng.pick(NUMERICAL_BLOCKS)(rng);
+      const block = rng.pick(pool)(rng);
       const built = [];
       let failed = false;
 
@@ -594,24 +810,30 @@
 
   /* ---------------------------------------------------------------- state */
 
-  const LENGTHS = {
-    full: {
-      checking: { n: 46, s: 480 },
-      categorising: { n: 40, s: 600 },
-      numerical: { n: 21, s: 1200 },
-      verbal: { n: 26, s: 1080 },
+  const TIERS = {
+    clerical: {
+      label: 'Clerical Officer',
+      note: 'Four tests: checking, categorising, numerical and verbal.',
+      drills: ['checking', 'categorising', 'numerical', 'verbal'],
     },
-    half: {
-      checking: { n: 23, s: 240 },
-      categorising: { n: 20, s: 300 },
-      numerical: { n: 11, s: 600 },
-      verbal: { n: 13, s: 540 },
+    executive: {
+      label: 'Executive / Administrative',
+      note: 'Three tests: numerical, verbal and a job simulation. The first two are here; ' +
+        'the simulation is not built.',
+      drills: ['numerical', 'verbal'],
     },
-    short: {
-      checking: { n: 10, s: 120 },
-      categorising: { n: 10, s: 150 },
-      numerical: { n: 6, s: 300 },
-      verbal: { n: 6, s: 240 },
+  };
+
+  const PLANS = {
+    clerical: {
+      checking: { full: { n: 46, s: 480 }, half: { n: 23, s: 240 }, short: { n: 10, s: 120 } },
+      categorising: { full: { n: 40, s: 600 }, half: { n: 20, s: 300 }, short: { n: 10, s: 150 } },
+      numerical: { full: { n: 21, s: 1200 }, half: { n: 11, s: 600 }, short: { n: 6, s: 300 } },
+      verbal: { full: { n: 26, s: 1080 }, half: { n: 13, s: 540 }, short: { n: 6, s: 240 } },
+    },
+    executive: {
+      numerical: { full: { n: 36, s: 1800 }, half: { n: 18, s: 900 }, short: { n: 8, s: 400 } },
+      verbal: { full: { n: 59, s: 1800 }, half: { n: 30, s: 900 }, short: { n: 12, s: 360 } },
     },
   };
 
@@ -632,6 +854,7 @@
     seed: 0,
     feedback: false,
     length: 'full',
+    tier: 'clerical',
     startedAt: 0,
     deadline: 0,
     allowed: 0,
@@ -778,14 +1001,14 @@
 
   function renderNumerical(item) {
     let html = '<p class="prompt">' + escapeHtml(item.prompt) + '</p>' +
-      '<div class="options" id="options">';
+      '<div class="choices" id="choices">';
     item.options.forEach(function (text, index) {
       html += '<button type="button" class="option" data-index="' + index + '">' +
         '<b>' + 'ABCDE'[index] + '</b><span>' + escapeHtml(text) + '</span></button>';
     });
     html += '</div>';
     $('#question').innerHTML = html;
-    $('#options').addEventListener('click', function (event) {
+    $('#choices').addEventListener('click', function (event) {
       const button = event.target.closest('.option');
       if (!button) return;
       button.blur();
@@ -796,14 +1019,14 @@
 
   function renderVerbal(item) {
     let html = '<p class="statement">&ldquo;' + escapeHtml(item.statement) + '&rdquo;</p>' +
-      '<div class="options three" id="options">';
+      '<div class="choices three" id="choices">';
     ['T', 'F', 'C'].forEach(function (key) {
       html += '<button type="button" class="option" data-key="' + key + '">' +
         '<b>' + key + '</b><span>' + VERBAL_LABELS[key] + '</span></button>';
     });
     html += '</div>';
     $('#question').innerHTML = html;
-    $('#options').addEventListener('click', function (event) {
+    $('#choices').addEventListener('click', function (event) {
       const button = event.target.closest('.option');
       if (!button) return;
       button.blur();
@@ -992,7 +1215,7 @@
       state.ticker = null;
     }
     clearFeedbackTimer();
-    const settings = LENGTHS[state.length][drill];
+    const settings = PLANS[state.tier][drill][state.length];
     const seed = options && options.seed != null ? options.seed : pickSeed();
     const rng = new Rng(seed);
 
@@ -1019,7 +1242,7 @@
           state.items.push(makeCatItem(rng));
         }
       } else if (drill === 'numerical') {
-        state.items = makeNumericalPaper(rng, settings.n);
+        state.items = makeNumericalPaper(rng, settings.n, state.tier === 'executive');
       } else {
         state.items = makeVerbalPaper(rng, settings.n);
       }
@@ -1246,11 +1469,19 @@
   }
 
   function updateMeta() {
-    const chosen = LENGTHS[$('#opt-length').value];
+    const length = $('#opt-length').value;
+    const plan = PLANS[state.tier];
+    const allowed = TIERS[state.tier].drills;
+
     Object.keys(LABELS).forEach(function (drill) {
+      const card = document.querySelector('[data-card="' + drill + '"]');
+      if (card) card.classList.toggle('hidden', allowed.indexOf(drill) === -1);
+
       const target = document.querySelector('#meta-' + drill);
-      if (!target) return;
-      target.textContent = `${chosen[drill].n} questions \u00b7 ${clockText(chosen[drill].s)}`;
+      if (target && plan[drill]) {
+        const chosen = plan[drill][length];
+        target.textContent = `${chosen.n} questions \u00b7 ${clockText(chosen.s)}`;
+      }
     });
 
     const verbalButton = document.querySelector('[data-start="verbal"]');
@@ -1259,6 +1490,9 @@
       verbalButton.disabled = missing;
       verbalButton.textContent = missing ? 'Passage file missing' : 'Start verbal';
     }
+
+    const note = $('#tier-note');
+    if (note) note.textContent = TIERS[state.tier].note;
   }
 
   /* -------------------------------------------------------------- wiring */
@@ -1307,6 +1541,10 @@
   });
 
   $('#opt-length').addEventListener('change', updateMeta);
+  $('#opt-tier').addEventListener('change', function () {
+    state.tier = $('#opt-tier').value;
+    updateMeta();
+  });
 
   $('#again-same').addEventListener('click', function () {
     startRun(state.drill, { seed: state.seed });

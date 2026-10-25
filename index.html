@@ -25,6 +25,13 @@
 
     <div class="options">
       <label class="field">
+        <span>Grade</span>
+        <select id="opt-tier">
+          <option value="clerical" selected>Clerical Officer</option>
+          <option value="executive">Executive / Administrative</option>
+        </select>
+      </label>
+      <label class="field">
         <span>Length</span>
         <select id="opt-length">
           <option value="full" selected>Full &mdash; real timings</option>
@@ -42,29 +49,31 @@
       </label>
     </div>
 
+    <p id="tier-note" class="fine tier-note"></p>
+
     <div class="cards">
-      <article class="card">
+      <article class="card" data-card="checking">
         <h2>Checking</h2>
         <p class="meta" id="meta-checking">46 questions &middot; 8:00</p>
         <p>Two panels of the same register. Mark every column that contains a transcription error, or claim the record is clean.</p>
         <button class="btn primary" data-start="checking">Start checking</button>
       </article>
 
-      <article class="card">
+      <article class="card" data-card="categorising">
         <h2>Categorising</h2>
         <p class="meta" id="meta-categorising">40 questions &middot; 10:00</p>
         <p>Two lookups per question: invoice area, then purchase reference category. The tables never change mid-test.</p>
         <button class="btn primary" data-start="categorising">Start categorising</button>
       </article>
 
-      <article class="card">
+      <article class="card" data-card="numerical">
         <h2>Numerical</h2>
         <p class="meta" id="meta-numerical">21 questions &middot; 20:00</p>
         <p>A block of figures, then questions derived from it. Five options, calculator allowed. Percentages, totals, unit costs, rates.</p>
         <button class="btn primary" data-start="numerical">Start numerical</button>
       </article>
 
-      <article class="card">
+      <article class="card" data-card="verbal">
         <h2>Verbal</h2>
         <p class="meta" id="meta-verbal">26 questions &middot; 18:00</p>
         <p>A short passage, then statements to judge True, False or Cannot say. Answer only from the passage.</p>

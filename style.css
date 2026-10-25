@@ -96,6 +96,8 @@ input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: var(--ac
   border-radius: 4px;
 }
 
+.tier-note { margin: 0 0 1.25rem; }
+
 /* ----------------------------------------------------------------- cards */
 
 .cards {
@@ -381,8 +383,8 @@ input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: var(--ac
 .figures-list dt { color: var(--muted); font-size: 0.85rem; }
 .figures-list dd { margin: 0; }
 
-.options { display: grid; gap: 0.5rem; }
-.options.three { grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
+.choices { display: grid; gap: 0.5rem; }
+.choices.three { grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
 
 .option {
   display: flex;

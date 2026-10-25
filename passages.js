@@ -278,4 +278,166 @@ window.PASSAGES = [
       },
     ],
   },
+  {
+    id: 'leave',
+    title: 'Annual leave',
+    text: `Staff accrue annual leave at a rate of one and two-thirds days per month, giving twenty days in a full year. Up to five days may be carried into the following year, and carried days must be used before the end of March. Leave requested for a period of more than ten consecutive days requires approval from the head of division rather than the line manager. Where a public holiday falls within a period of annual leave, the leave is reduced by one day.`,
+    items: [
+      {
+        statement: `Carried leave must be used by the end of February.`,
+        key: 'F',
+        why: 'Carried days must be used before the end of March.',
+      },
+      {
+        statement: `A request for twelve consecutive days needs approval from the head of division.`,
+        key: 'T',
+        why: 'More than ten consecutive days moves approval to the head of division.',
+      },
+      {
+        statement: `A public holiday falling during annual leave reduces the leave taken by one day.`,
+        key: 'T',
+        why: 'Stated directly in the final sentence.',
+      },
+      {
+        statement: `Leave carried into the following year is forfeited if it is not used.`,
+        key: 'C',
+        why: 'The passage sets a deadline but says nothing about what happens to unused carried days.',
+      },
+    ],
+  },
+  {
+    id: 'complaints',
+    title: 'Handling complaints',
+    text: `A complaint must be acknowledged within five working days and a substantive reply issued within twenty working days. Where the complaint concerns a named member of staff, that person must be given a copy of the complaint. Complaints that are anonymous will be recorded but cannot be investigated. A complainant who is dissatisfied with the reply may refer the matter to the review officer within fifteen working days.`,
+    items: [
+      {
+        statement: `An anonymous complaint will be recorded.`,
+        key: 'T',
+        why: 'Such complaints "will be recorded but cannot be investigated".',
+      },
+      {
+        statement: `An anonymous complaint may be investigated if the matter is serious.`,
+        key: 'F',
+        why: 'The passage makes the bar absolute: anonymous complaints cannot be investigated.',
+      },
+      {
+        statement: `A member of staff named in a complaint must be given a copy of it.`,
+        key: 'T',
+        why: 'Stated directly.',
+      },
+      {
+        statement: `The review officer may extend the twenty-working-day period.`,
+        key: 'C',
+        why: 'Nothing is said about extending that period.',
+      },
+    ],
+  },
+  {
+    id: 'pettycash',
+    title: 'Petty cash',
+    text: `The petty cash float is €400 and is reconciled weekly. Vouchers are required for every payment, and no single payment may exceed €50. Petty cash may not be used for travel expenses, which are claimed separately. Where the float falls below €100, a replenishment request must be submitted to finance, who will restore it to €400 within three working days.`,
+    items: [
+      {
+        statement: `A payment of €60 from petty cash is permitted if a voucher is provided.`,
+        key: 'F',
+        why: 'No single payment may exceed €50.',
+      },
+      {
+        statement: `Travel expenses cannot be paid from petty cash.`,
+        key: 'T',
+        why: 'Petty cash "may not be used for travel expenses".',
+      },
+      {
+        statement: `A replenishment request is required once the float falls below €100.`,
+        key: 'T',
+        why: 'Stated directly.',
+      },
+      {
+        statement: `The float is reconciled before it is replenished.`,
+        key: 'C',
+        why: 'Both are mentioned, but the passage does not say one happens before the other.',
+      },
+    ],
+  },
+  {
+    id: 'incidents',
+    title: 'Reporting incidents',
+    text: `All accidents, however minor, must be reported to the safety officer on the same day. A written report must follow within three working days. Incidents involving equipment must also be logged with the facilities team. Where an incident results in absence from work, the report must be copied to HR. Near misses should be reported even though no injury occurred.`,
+    items: [
+      {
+        statement: `A minor accident need not be reported.`,
+        key: 'F',
+        why: 'Accidents must be reported "however minor".',
+      },
+      {
+        statement: `A written report must be submitted within three working days.`,
+        key: 'T',
+        why: 'Stated directly.',
+      },
+      {
+        statement: `A near miss is reported even where nobody was hurt.`,
+        key: 'T',
+        why: 'Near misses should be reported "even though no injury occurred".',
+      },
+      {
+        statement: `HR must be copied on every incident report.`,
+        key: 'F',
+        why: 'HR is copied only where the incident results in absence from work.',
+      },
+    ],
+  },
+  {
+    id: 'ituse',
+    title: 'Acceptable use of IT equipment',
+    text: `Departmental devices may be used for incidental personal use provided it does not interfere with work and does not involve additional cost to the Department. Software may not be installed without approval from the IT unit. Removable media must be encrypted. Staff must lock their workstation when leaving it unattended, even briefly. Access to systems is withdrawn on the last working day of employment.`,
+    items: [
+      {
+        statement: `Incidental personal use of a departmental device is permitted.`,
+        key: 'T',
+        why: 'Permitted subject to the two stated conditions.',
+      },
+      {
+        statement: `Staff may install software if their line manager agrees.`,
+        key: 'F',
+        why: 'Approval must come from the IT unit, not the line manager.',
+      },
+      {
+        statement: `An unencrypted removable drive may be used for a short period.`,
+        key: 'F',
+        why: 'Removable media "must be encrypted"; no short-term exception is given.',
+      },
+      {
+        statement: `Access is withdrawn on the employee\u2019s last working day.`,
+        key: 'T',
+        why: 'Stated directly.',
+      },
+    ],
+  },
+  {
+    id: 'boards',
+    title: 'Interview boards',
+    text: `An interview board must have at least three members, at least one of whom is independent of the recruiting organisation. Board members must declare any connection to a candidate before the interviews begin. A candidate who is related to a board member may not be interviewed by that board. Scores are recorded independently before the board discusses each candidate, and the final order of merit is agreed by consensus.`,
+    items: [
+      {
+        statement: `A board of two members is acceptable.`,
+        key: 'F',
+        why: 'A board must have at least three members.',
+      },
+      {
+        statement: `An independent member is required on every board.`,
+        key: 'T',
+        why: 'At least one member must be independent of the recruiting organisation.',
+      },
+      {
+        statement: `A candidate related to a board member may be interviewed once the connection is declared.`,
+        key: 'F',
+        why: 'Such a candidate may not be interviewed by that board, declared or not.',
+      },
+      {
+        statement: `A board member who declares a connection must withdraw from the board.`,
+        key: 'C',
+        why: 'Withdrawal is stated only for candidates who are related; other connections are not covered.',
+      },
+    ],
+  },
 ];
