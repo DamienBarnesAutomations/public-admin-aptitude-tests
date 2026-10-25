@@ -49,7 +49,7 @@ const sandbox = {
 };
 sandbox.window.window = window;
 vm.createContext(sandbox);
-for (const file of ['passages.js', 'app.js']) {
+for (const file of ['passages.js', 'scenarios.js', 'app.js']) {
   vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), sandbox, { filename: file });
 }
 
@@ -135,6 +135,35 @@ for (let seed = 1; seed <= SEEDS; seed += 1) {
 check(Object.keys(execPrompts).length === 12, `expected 12 executive question types, saw ${Object.keys(execPrompts).length}`);
 for (let seed = 1; seed <= SEEDS; seed += 1) {
   check(PAAT.makeVerbalPaper(new PAAT.Rng(seed), 59).length === 59, `seed ${seed}: executive verbal paper`);
+}
+
+/* ---- job simulation ----------------------------------------------------- */
+
+const scenarios = window.SCENARIOS;
+check(scenarios && scenarios.length > 0, 'no scenarios');
+const scenarioIds = new Set();
+scenarios.forEach(function (scenario) {
+  check(!scenarioIds.has(scenario.id), `duplicate scenario id ${scenario.id}`);
+  scenarioIds.add(scenario.id);
+  check(scenario.title && scenario.text && scenario.why, `${scenario.id}: field missing`);
+  check(scenario.actions.length === 5, `${scenario.id}: ${scenario.actions.length} actions`);
+  const marks = scenario.actions.map((action) => action.mark).sort().join('');
+  check(marks === '01234', `${scenario.id}: marks ${marks} are not 0-4 once each`);
+});
+/* The best action must not be identifiable by length alone. */
+const bestIsLongest = scenarios.filter(function (scenario) {
+  const lengths = scenario.actions.map((action) => action.text.length);
+  const best = scenario.actions.find((action) => action.mark === 4);
+  return best.text.length === Math.max.apply(null, lengths);
+}).length;
+check(bestIsLongest / scenarios.length <= 0.4,
+  `best action is the longest in ${bestIsLongest}/${scenarios.length} scenarios`);
+for (let seed = 1; seed <= SEEDS; seed += 1) {
+  const paper = PAAT.makeJobSimPaper(new PAAT.Rng(seed), 25);
+  check(paper.length === 25, `seed ${seed}: job sim paper has ${paper.length} questions`);
+  paper.forEach(function (item) {
+    check(item.actions[item.bestIndex].mark === 4, `seed ${seed}: bestIndex is not the 4-mark action`);
+  });
 }
 
 /* ---- checking / categorising ------------------------------------------- */
