@@ -1,8 +1,8 @@
 # Public Admin Aptitude Tests
 
 Timed practice drills for the Irish civil service **Clerical Officer** aptitude
-tests. Two tests, reconstructed from the formats published in the
-`publicjobs.ie` self-assessment system.
+tests. All four components, at the timings published in the `publicjobs.ie`
+self-assessment system.
 
 Static site. No build step, no dependencies, no network calls, no tracking.
 Open `index.html` and it works.
@@ -15,31 +15,31 @@ Open `index.html` and it works.
 |---|---|---|---|
 | **Checking** | 46 | 8:00 | Two panels of the same register. Mark every column containing a transcription error, or claim the record is clean. ~10 seconds a question. |
 | **Categorising** | 40 | 10:00 | Two lookups per question: invoice area, then purchase reference category. ~7.5 seconds per answer. |
-
-These are the two components of the real battery that commercial practice banks
-handle badly or not at all — the reasoning sections are well served elsewhere.
+| **Numerical** | 21 | 20:00 | A block of figures at the top of the page, then questions derived from it. Five options, calculator allowed. |
+| **Verbal** | 26 | 18:00 | A short passage, then statements to judge True, False or Cannot say. Answer only from the passage. |
 
 ## How to use it
 
-Keyboard only, no mouse needed.
+Keyboard only. No mouse needed.
 
-**Checking** — `A` `B` `C` `D` toggle a column, `N` claims the record is clean,
-`Enter` submits, `Backspace` clears. Selected columns and "no error" are mutually
-exclusive: marking a column cancels the clean claim, and vice versa.
-
-**Categorising** — type the invoice area letter (`A`–`F`), then the reference
-category letter (`A`–`C`), then `Enter`. `Backspace` undoes the last letter.
+- **Checking** — `A`–`D` toggle a column, `N` claims the record is clean, `Enter`
+  submits, `Backspace` clears. Marking a column cancels the clean claim, and
+  claiming clean clears any marked columns.
+- **Categorising** — type the invoice area (`A`–`F`), then the reference category
+  (`A`–`C`), then `Enter`. `Backspace` undoes the last letter.
+- **Numerical** — `A`–`E` answers and submits.
+- **Verbal** — `T`, `F` or `C` answers and submits.
 
 The clock is absolute, not a tick counter, so a background tab cannot buy you
 time. If the deadline passes before you submit, the run ends.
 
 ### Options
 
-- **Length** — full (real timings), half, or a 10-question short set.
+- **Length** — full (real timings), half, or a short 10-question set.
 - **Seed** — leave blank for a fresh paper, or enter a number to reproduce one.
   The seed is shown on the results screen and saved with every run.
-- **Show the answer after each question** — feedback mode. Slower, and useful
-  when you are learning the format rather than training pace.
+- **Show the answer after each question** — feedback mode. For verbal items it
+  also shows the rationale, so you can check the key rather than trust it.
 
 ### Scoreboard
 
@@ -47,7 +47,7 @@ Every completed run is stored in `localStorage` in your browser. Nothing is
 uploaded. Export gives you a CSV. Clearing is permanent.
 
 Seeds are reproducible **within this app**. The terminal version generates a
-different paper from the same seed — the two use different PRNGs.
+different paper from the same seed — the two use different generators.
 
 ## Scoring
 
@@ -62,35 +62,42 @@ different paper from the same seed — the two use different PRNGs.
 **Categorising** is two points a question, one for the area and one for the
 reference category.
 
+**Numerical and verbal** are one point a question.
+
+## The verbal bank
+
+`passages.js` holds ten passages with forty statements. Each statement carries
+the key (`T`/`F`/`C`) and a one-line rationale, which is what feedback mode
+shows you. The file is plain data: read it, argue with it, add to it. Every
+statement is answerable from its own passage alone.
+
+This is the one part of the tool that is written rather than generated, and the
+key is editorial judgement rather than an official answer sheet. Treat it as
+practice material, not as a source of truth about PAS marking.
+
 ## Deploying to GitHub Pages
 
-This folder is self-contained. Publish it as its own repository — do not point
-Pages at a repository that contains anything else of yours.
+This folder is self-contained, so it can be published as its own repository.
+Do not point Pages at a repository that contains anything else of yours.
 
 ```bash
 cd public-admin-aptitude-tests
-git init
-git add .
-git commit -m "Add public admin aptitude drills"
+git init && git add . && git commit -m "Add public admin aptitude drills"
 git branch -M main
 git remote add origin git@github.com:<you>/public-admin-aptitude-tests.git
 git push -u origin main
 ```
 
-Then in the repository: **Settings → Pages → Build and deployment → Source:
-Deploy from a branch → Branch: `main`, folder: `/ (root)`**. Save.
+Then **Settings → Pages → Deploy from a branch → `main`, folder `/ (root)`**.
+`.nojekyll` is already present so the folder is served as-is.
 
-The site appears at `https://<you>.github.io/public-admin-aptitude-tests/`
-within a minute or two. `.nojekyll` is already present so the folder is served
-as-is.
-
-To use it locally, just open `index.html` in a browser. `file://` works — there
-are no modules and no fetch calls.
+To use it locally, open `index.html`. `file://` works — there are no modules and
+no fetch calls.
 
 ## The terminal version
 
-`cli/aptitude_drills.py` is the same two drills for a terminal, Python 3 stdlib
-only.
+`cli/aptitude_drills.py` covers the **checking and categorising** drills for a
+terminal. Python 3 stdlib only.
 
 ```bash
 python cli/aptitude_drills.py checking
@@ -99,18 +106,29 @@ python cli/aptitude_drills.py checking --peek --questions 5
 python cli/aptitude_drills.py scoreboard
 ```
 
-It writes `cli/drill_scoreboard.csv` (gitignored). Useful when you want a
-distraction-free full-screen run; otherwise the browser version is the primary.
+It writes `cli/drill_scoreboard.csv` (gitignored).
+
+Verbal and numerical are **web-only, deliberately**. The verbal bank is
+editorial content and duplicating it into Python would mean maintaining forty
+statements in two places, which is how keys drift apart. Numerical would mean a
+second implementation of the same arithmetic. The browser version is the
+canonical one.
 
 ## Limits, honestly
 
-- **The question mix is an approximation.** The real distribution of clean
-  versus dirty records is not published. This uses 65% dirty with up to three
+- **The question mix is an approximation.** The real distribution of clean versus
+  dirty checking records is not published. This uses 65% dirty with up to three
   errors, inferred from the four worked examples in the official system.
-- **The scoring model is a training design, not PAS's marking scheme.** PAS does
-  not publish how the checking test is scored.
-- **Item content is synthetic.** The constructs match; the specific wording and
-  difficulty are reconstructions.
+- **The scoring models are training designs.** PAS does not publish how the
+  checking test is marked. Per-column scoring with the clean-claim rule is my
+  reconstruction.
+- **Verbal keys are mine.** See above.
+- **Numerical difficulty is narrower than the real test.** Four block types —
+  monthly volumes, unit costs, ticket revenue, hours and pay — covering the
+  operations that recur: percentage change, totals, averages, unit cost,
+  discounts, revenue splits, overtime. Real papers range wider.
+- **Item content is synthetic.** The constructs match; the specific wording is a
+  reconstruction.
 - The competition booklet governs the real test. Question counts and time limits
   are set per campaign and can differ from the self-assessment versions.
 

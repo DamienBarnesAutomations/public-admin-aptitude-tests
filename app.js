@@ -252,15 +252,373 @@
     return html;
   }
 
+  /* ------------------------------------------------------ numerical drill */
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June'];
+
+  function euro(cents) {
+    return '\u20ac' + (cents / 100).toLocaleString('en-IE', {
+      minimumFractionDigits: 2, maximumFractionDigits: 2,
+    });
+  }
+
+  function whole(value) {
+    return Math.round(value).toLocaleString('en-IE');
+  }
+
+  function onePlace(value) {
+    return Math.abs(value).toFixed(1) + '%';
+  }
+
+  /* Build five distinct options from a correct answer plus a decoy generator,
+   * so a block can always be completed even when a decoy collides. */
+  function finalise(rng, question) {
+    const options = [question.correct];
+    for (let k = 0; options.length < 5 && k < 32; k += 1) {
+      const text = question.decoy(k);
+      if (text && text !== question.correct && options.indexOf(text) === -1) options.push(text);
+    }
+    if (options.length < 5) return null;
+    for (let i = options.length - 1; i > 0; i -= 1) {
+      const j = rng.int(0, i);
+      const held = options[i];
+      options[i] = options[j];
+      options[j] = held;
+    }
+    return { prompt: question.prompt, options: options, answer: options.indexOf(question.correct) };
+  }
+
+  function dataTable(caption, headers, rows, mono) {
+    return '<table class="figures"><caption>' + caption + '</caption><thead><tr>' +
+      headers.map(function (head) { return '<th scope="col">' + head + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.map(function (row) {
+        return '<tr>' + row.map(function (cell, index) {
+          return '<td' + (mono[index] ? ' class="mono"' : '') + '>' + cell + '</td>';
+        }).join('') + '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  function blockVolumes(rng) {
+    const values = MONTHS.map(function () { return rng.int(900, 4200); });
+    const total = values.reduce(function (sum, value) { return sum + value; }, 0);
+    const average = Math.round(total / 6);
+    const from = rng.int(1, 3);
+    const to = from + rng.int(1, 5 - from);
+    const change = ((values[to] - values[from]) / values[from]) * 100;
+    const otherBase = ((values[to] - values[from]) / values[to]) * 100;
+
+    const html = dataTable(
+      'Applications processed, January to June',
+      MONTHS.map(function (month) { return month.slice(0, 3); }),
+      [values.map(function (value) { return whole(value); })],
+      MONTHS.map(function () { return true; })
+    );
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'What was the total number of applications processed over the six months?',
+          correct: whole(total),
+          decoy: function (k) {
+            const variants = [total - values[0], total + values[5], total * 0.9, total * 1.1];
+            return whole(variants[k % variants.length] + (k >= variants.length ? k : 0));
+          },
+        },
+        {
+          prompt: 'What was the average number of applications per month, to the nearest whole number?',
+          correct: whole(average),
+          decoy: function (k) {
+            const variants = [total / 5, total / 7, average * 0.9, average + 120];
+            return whole(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What was the percentage change in applications from ' + MONTHS[from] +
+            ' to ' + MONTHS[to] + ', to one decimal place?',
+          correct: change.toFixed(1) + '%',
+          decoy: function (k) {
+            const variants = [
+              (-change).toFixed(1) + '%',
+              (change * 1.5).toFixed(1) + '%',
+              otherBase.toFixed(1) + '%',
+              (change + 2.4).toFixed(1) + '%',
+            ];
+            return variants[k % variants.length];
+          },
+        },
+      ],
+    };
+  }
+
+  function blockUnitCosts(rng) {
+    const items = [
+      { name: 'Box files', unit: rng.int(8, 40) * 25, qty: rng.int(3, 24) },
+      { name: 'Printer paper', unit: rng.int(12, 60) * 25, qty: rng.int(4, 30) },
+      { name: 'Toner cartridges', unit: rng.int(60, 200) * 25, qty: rng.int(2, 9) },
+    ];
+    const lines = items.map(function (item) { return item.unit * item.qty; });
+    const spend = lines.reduce(function (sum, line) { return sum + line; }, 0);
+
+    const html = dataTable(
+      'Procurement list',
+      ['Item', 'Unit price', 'Quantity'],
+      items.map(function (item) { return [item.name, euro(item.unit), String(item.qty)]; }),
+      [false, true, true]
+    );
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'What is the total cost of the ' + items[0].name.toLowerCase() + '?',
+          correct: euro(lines[0]),
+          decoy: function (k) {
+            const variants = [
+              items[0].unit * (items[0].qty - 1),
+              items[0].unit * (items[0].qty + 1),
+              Math.round(lines[0] * 0.9),
+              Math.round(lines[0] * 1.1),
+            ];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What is the total spend on all three items?',
+          correct: euro(spend),
+          decoy: function (k) {
+            const variants = [spend - lines[0], spend + lines[1], Math.round(spend * 0.9), Math.round(spend * 1.05)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'A 10% discount applies to the ' + items[1].name.toLowerCase() +
+            '. How much is saved on that line?',
+          correct: euro(Math.round(lines[1] * 0.1)),
+          decoy: function (k) {
+            const variants = [
+              Math.round(lines[1] * 0.2),
+              Math.round(lines[1] * 0.05),
+              lines[1] - Math.round(lines[1] * 0.1),
+              items[1].unit,
+            ];
+            return euro(variants[k % variants.length]);
+          },
+        },
+      ],
+    };
+  }
+
+  function blockTickets(rng) {
+    const standard = rng.int(25, 70) * 50;
+    const concession = Math.round(standard * 0.55 / 50) * 50;
+    const standardSold = rng.int(120, 640);
+    const concessionSold = rng.int(40, 300);
+    const standardRevenue = standard * standardSold;
+    const concessionRevenue = concession * concessionSold;
+    const totalRevenue = standardRevenue + concessionRevenue;
+
+    const html = dataTable(
+      'Ticket sales',
+      ['Type', 'Price', 'Sold'],
+      [
+        ['Standard', euro(standard), String(standardSold)],
+        ['Concession', euro(concession), String(concessionSold)],
+      ],
+      [false, true, true]
+    );
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'What was the total revenue from ticket sales?',
+          correct: euro(totalRevenue),
+          decoy: function (k) {
+            const variants = [
+              standard * (standardSold + concessionSold),
+              concession * (standardSold + concessionSold),
+              Math.round(totalRevenue * 0.9),
+              totalRevenue - standardRevenue,
+            ];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'By how much did standard revenue exceed concession revenue?',
+          correct: euro(standardRevenue - concessionRevenue),
+          decoy: function (k) {
+            const variants = [
+              concessionRevenue - standardRevenue,
+              totalRevenue,
+              standardRevenue,
+              Math.round((standardRevenue - concessionRevenue) * 1.2),
+            ];
+            return euro(Math.abs(variants[k % variants.length]));
+          },
+        },
+        {
+          prompt: 'What percentage of total revenue came from concessions, to one decimal place?',
+          correct: ((concessionRevenue / totalRevenue) * 100).toFixed(1) + '%',
+          decoy: function (k) {
+            const byCount = (concessionSold / (standardSold + concessionSold)) * 100;
+            const actual = (concessionRevenue / totalRevenue) * 100;
+            const variants = [
+              byCount.toFixed(1) + '%',
+              (actual * 2).toFixed(1) + '%',
+              (actual + 7.5).toFixed(1) + '%',
+              (100 - actual).toFixed(1) + '%',
+            ];
+            return variants[k % variants.length];
+          },
+        },
+      ],
+    };
+  }
+
+  function blockPay(rng) {
+    const rate = rng.int(30, 64) * 50;
+    const hours = rng.int(30, 39);
+    const weeks = rng.int(4, 12);
+    const overtimeHours = rng.int(2, 10);
+    const weekly = rate * hours;
+    const overtime = Math.round(rate * 1.5) * overtimeHours;
+
+    const html = '<dl class="figures-list">' +
+      '<div><dt>Hourly rate</dt><dd class="mono">' + euro(rate) + '</dd></div>' +
+      '<div><dt>Contracted hours per week</dt><dd class="mono">' + hours + '</dd></div>' +
+      '<div><dt>Weeks in period</dt><dd class="mono">' + weeks + '</dd></div>' +
+      '<div><dt>Overtime rate</dt><dd>time and a half</dd></div>' +
+      '</dl>';
+
+    return {
+      html: html,
+      questions: [
+        {
+          prompt: 'What is the weekly pay before overtime?',
+          correct: euro(weekly),
+          decoy: function (k) {
+            const variants = [rate * (hours - 1), rate * (hours + 1), Math.round(weekly * 0.9), rate * 40];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What is the pay for the full period, before overtime?',
+          correct: euro(weekly * weeks),
+          decoy: function (k) {
+            const variants = [weekly * (weeks - 1), weekly * (weeks + 1), weekly, Math.round(weekly * weeks * 0.9)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+        {
+          prompt: 'What is the additional pay for ' + overtimeHours + ' hours of overtime?',
+          correct: euro(overtime),
+          decoy: function (k) {
+            const variants = [rate * overtimeHours, rate * 2 * overtimeHours, overtime - rate, Math.round(overtime * 0.9)];
+            return euro(variants[k % variants.length]);
+          },
+        },
+      ],
+    };
+  }
+
+  const NUMERICAL_BLOCKS = [blockVolumes, blockUnitCosts, blockTickets, blockPay];
+
+  function makeNumericalPaper(rng, total) {
+    const items = [];
+    let guard = 0;
+
+    while (items.length < total && guard < 80) {
+      guard += 1;
+      const block = rng.pick(NUMERICAL_BLOCKS)(rng);
+      const built = [];
+      let failed = false;
+
+      block.questions.forEach(function (question) {
+        const complete = finalise(rng, question);
+        if (!complete) failed = true;
+        else built.push(complete);
+      });
+      if (failed) continue;
+
+      built.forEach(function (complete) {
+        if (items.length >= total) return;
+        items.push({
+          contextId: 'num' + guard,
+          contextHtml: block.html,
+          prompt: complete.prompt,
+          options: complete.options,
+          answer: complete.answer,
+        });
+      });
+    }
+
+    if (items.length < total) throw new Error('could not build a full numerical paper');
+    return items;
+  }
+
+  /* --------------------------------------------------------- verbal drill */
+
+  const VERBAL_LABELS = { T: 'True', F: 'False', C: 'Cannot say' };
+
+  function passageHtml(passage) {
+    return '<blockquote class="passage"><h3>' + escapeHtml(passage.title) + '</h3><p>' +
+      escapeHtml(passage.text) + '</p></blockquote>';
+  }
+
+  function makeVerbalPaper(rng, total) {
+    const passages = window.PASSAGES || [];
+    if (!passages.length) throw new Error('passage file missing');
+    const items = [];
+
+    rng.sample(passages, passages.length).forEach(function (passage) {
+      if (items.length >= total) return;
+      passage.items.forEach(function (entry) {
+        if (items.length >= total) return;
+        items.push({
+          contextId: passage.id,
+          contextHtml: passageHtml(passage),
+          statement: entry.statement,
+          key: entry.key,
+          why: entry.why,
+        });
+      });
+    });
+
+    if (items.length < total) throw new Error('not enough verbal items');
+    return items;
+  }
+
   /* ---------------------------------------------------------------- state */
 
   const LENGTHS = {
-    full: { checking: { n: 46, s: 480 }, categorising: { n: 40, s: 600 } },
-    half: { checking: { n: 23, s: 240 }, categorising: { n: 20, s: 300 } },
-    short: { checking: { n: 10, s: 120 }, categorising: { n: 10, s: 150 } },
+    full: {
+      checking: { n: 46, s: 480 },
+      categorising: { n: 40, s: 600 },
+      numerical: { n: 21, s: 1200 },
+      verbal: { n: 26, s: 1080 },
+    },
+    half: {
+      checking: { n: 23, s: 240 },
+      categorising: { n: 20, s: 300 },
+      numerical: { n: 11, s: 600 },
+      verbal: { n: 13, s: 540 },
+    },
+    short: {
+      checking: { n: 10, s: 120 },
+      categorising: { n: 10, s: 150 },
+      numerical: { n: 6, s: 300 },
+      verbal: { n: 6, s: 240 },
+    },
   };
 
-  const LABELS = { checking: 'Checking', categorising: 'Categorising' };
+  const LABELS = {
+    checking: 'Checking',
+    categorising: 'Categorising',
+    numerical: 'Numerical',
+    verbal: 'Verbal',
+  };
   const STORE_KEY = 'paat.runs.v1';
 
   const state = {
@@ -281,6 +639,7 @@
     selected: new Set(),
     clean: false,
     entry: [],
+    lastContextId: null,
   };
 
   /* ------------------------------------------------------------------ dom */
@@ -399,10 +758,64 @@
       : 'Enter to submit, Backspace to undo.';
   }
 
+  function renderContext(item) {
+    const host = $('#context');
+    if (!item.contextId) {
+      host.innerHTML = '';
+      host.hidden = true;
+      state.lastContextId = null;
+      return;
+    }
+    if (state.lastContextId !== item.contextId) {
+      host.innerHTML = item.contextHtml;
+      host.hidden = false;
+      state.lastContextId = item.contextId;
+    }
+  }
+
+  function renderNumerical(item) {
+    let html = '<p class="prompt">' + escapeHtml(item.prompt) + '</p>' +
+      '<div class="options" id="options">';
+    item.options.forEach(function (text, index) {
+      html += '<button type="button" class="option" data-index="' + index + '">' +
+        '<b>' + 'ABCDE'[index] + '</b><span>' + escapeHtml(text) + '</span></button>';
+    });
+    html += '</div>';
+    $('#question').innerHTML = html;
+    $('#options').addEventListener('click', function (event) {
+      const button = event.target.closest('.option');
+      if (!button) return;
+      button.blur();
+      submitNumerical(Number(button.dataset.index));
+    });
+    $('#hint').textContent = 'Press A\u2013E to answer.';
+  }
+
+  function renderVerbal(item) {
+    let html = '<p class="statement">&ldquo;' + escapeHtml(item.statement) + '&rdquo;</p>' +
+      '<div class="options three" id="options">';
+    ['T', 'F', 'C'].forEach(function (key) {
+      html += '<button type="button" class="option" data-key="' + key + '">' +
+        '<b>' + key + '</b><span>' + VERBAL_LABELS[key] + '</span></button>';
+    });
+    html += '</div>';
+    $('#question').innerHTML = html;
+    $('#options').addEventListener('click', function (event) {
+      const button = event.target.closest('.option');
+      if (!button) return;
+      button.blur();
+      submitVerbal(button.dataset.key);
+    });
+    $('#hint').textContent = 'Press T, F or C.';
+  }
+
   function renderQuestion() {
     const item = state.items[state.index];
     $('#run-count').textContent = `Question ${state.index + 1} of ${state.items.length}`;
+    if (state.drill === 'numerical' || state.drill === 'verbal') renderContext(item);
     if (state.drill === 'checking') renderChecking(item);
+    else if (state.drill === 'numerical') renderNumerical(item);
+    else if (state.drill === 'verbal') renderVerbal(item);
     else renderCategorising(item);
   }
 
@@ -492,18 +905,53 @@
       row.expected = `${item.area} ${item.ref}`;
     }
 
-    state.rows.push(row);
+    recordRow(row);
+  }
 
+  function recordRow(row) {
+    if (state.finished || state.locked) return;
+    state.rows.push(row);
     if (state.feedback) {
       state.locked = true;
       markFeedback(row);
       window.setTimeout(function () {
         state.locked = false;
         advance();
-      }, 900);
+      }, row.why ? 1600 : 900);
     } else {
       advance();
     }
+  }
+
+  function submitNumerical(index) {
+    if (state.finished || state.locked) return;
+    if (performance.now() > state.deadline) { finish('time'); return; }
+    const item = state.items[state.index];
+    const ok = index === item.answer;
+    recordRow({
+      points: ok ? 1 : 0,
+      max: 1,
+      perfect: ok,
+      columns: {},
+      answer: 'ABCDE'[index],
+      expected: 'ABCDE'[item.answer] + ' \u2014 ' + item.options[item.answer],
+    });
+  }
+
+  function submitVerbal(key) {
+    if (state.finished || state.locked) return;
+    if (performance.now() > state.deadline) { finish('time'); return; }
+    const item = state.items[state.index];
+    const ok = key === item.key;
+    recordRow({
+      points: ok ? 1 : 0,
+      max: 1,
+      perfect: ok,
+      columns: {},
+      answer: VERBAL_LABELS[key],
+      expected: VERBAL_LABELS[item.key],
+      why: item.why,
+    });
   }
 
   function markFeedback(row) {
@@ -512,6 +960,7 @@
     hint.textContent = row.perfect
       ? 'Correct.'
       : `Answer: ${row.expected} \u2014 you said ${row.answer || 'nothing'}.`;
+    if (row.why) hint.textContent += ' ' + row.why;
   }
 
   function advance() {
@@ -554,10 +1003,24 @@
     state.entry = [];
     state.allowed = settings.s;
 
-    for (let i = 0; i < settings.n; i += 1) {
-      state.items.push(drill === 'checking'
-        ? makeCheckItem(rng, 0.65, 3)
-        : makeCatItem(rng));
+    try {
+      if (drill === 'checking') {
+        for (let i = 0; i < settings.n; i += 1) {
+          state.items.push(makeCheckItem(rng, 0.65, 3));
+        }
+      } else if (drill === 'categorising') {
+        for (let i = 0; i < settings.n; i += 1) {
+          state.items.push(makeCatItem(rng));
+        }
+      } else if (drill === 'numerical') {
+        state.items = makeNumericalPaper(rng, settings.n);
+      } else {
+        state.items = makeVerbalPaper(rng, settings.n);
+      }
+    } catch (error) {
+      window.alert('Could not build that paper: ' + error.message);
+      showView('menu');
+      return;
     }
 
     showView('run');
@@ -565,12 +1028,14 @@
     $('#run-count').textContent = `Question 1 of ${settings.n}`;
     $('#run-clock').classList.remove('urgent');
 
+    const contextHost = $('#context');
+    state.lastContextId = null;
     if (drill === 'categorising') {
-      $('#tables').innerHTML = tablesMarkup();
-      $('#tables').hidden = false;
+      contextHost.innerHTML = tablesMarkup();
+      contextHost.hidden = false;
     } else {
-      $('#tables').innerHTML = '';
-      $('#tables').hidden = true;
+      contextHost.innerHTML = '';
+      contextHost.hidden = true;
     }
 
     $('#hint').classList.remove('ok', 'bad');
@@ -609,7 +1074,7 @@
       ['A', 'B', 'C', 'D'].forEach(function (key) {
         columns[key] = rows.filter(function (row) { return row.columns[key]; }).length;
       });
-    } else {
+    } else if (state.drill === 'categorising') {
       columns.area = rows.filter(function (row) { return row.columns.area; }).length;
       columns.ref = rows.filter(function (row) { return row.columns.ref; }).length;
     }
@@ -631,7 +1096,7 @@
     html += `<tr><th scope="row">Seed</th><td class="mono">${state.seed}</td></tr>`;
     html += '</tbody></table>';
 
-    if (summary.attempted) {
+    if (summary.attempted && Object.keys(summary.columns).length) {
       html += '<h3>By column</h3><ul class="bars">';
       Object.keys(summary.columns).forEach(function (key) {
         const hits = summary.columns[key];
@@ -744,10 +1209,18 @@
 
   function updateMeta() {
     const chosen = LENGTHS[$('#opt-length').value];
-    $('#meta-checking').textContent =
-      `${chosen.checking.n} questions \u00b7 ${clockText(chosen.checking.s)}`;
-    $('#meta-categorising').textContent =
-      `${chosen.categorising.n} questions \u00b7 ${clockText(chosen.categorising.s)}`;
+    Object.keys(LABELS).forEach(function (drill) {
+      const target = document.querySelector('#meta-' + drill);
+      if (!target) return;
+      target.textContent = `${chosen[drill].n} questions \u00b7 ${clockText(chosen[drill].s)}`;
+    });
+
+    const verbalButton = document.querySelector('[data-start="verbal"]');
+    if (verbalButton) {
+      const missing = !(window.PASSAGES && window.PASSAGES.length);
+      verbalButton.disabled = missing;
+      verbalButton.textContent = missing ? 'Passage file missing' : 'Start verbal';
+    }
   }
 
   /* -------------------------------------------------------------- wiring */
@@ -762,16 +1235,28 @@
     if (key === 'backspace' || key === 'escape') { event.preventDefault(); clearAnswer(); return; }
 
     if (state.drill === 'checking') {
-      if ('abcd'.includes(key) && key.length === 1) {
+      if (key.length === 1 && 'abcd'.includes(key)) {
         event.preventDefault();
         applyColumn(key.toUpperCase());
       } else if (key === 'n') {
         event.preventDefault();
         applyColumn('N');
       }
-    } else if (key.length === 1 && key >= 'a' && key <= 'f') {
-      event.preventDefault();
-      pushEntry(key.toUpperCase());
+    } else if (state.drill === 'categorising') {
+      if (key.length === 1 && key >= 'a' && key <= 'f') {
+        event.preventDefault();
+        pushEntry(key.toUpperCase());
+      }
+    } else if (state.drill === 'numerical') {
+      const index = 'abcde'.indexOf(key);
+      if (key.length === 1 && index >= 0) {
+        event.preventDefault();
+        submitNumerical(index);
+      }
+    } else if (state.drill === 'verbal') {
+      if (key === 't') { event.preventDefault(); submitVerbal('T'); }
+      else if (key === 'f') { event.preventDefault(); submitVerbal('F'); }
+      else if (key === 'c') { event.preventDefault(); submitVerbal('C'); }
     }
   });
 
@@ -810,4 +1295,16 @@
   });
 
   updateMeta();
+
+  /* Test seam: lets the generators be exercised directly with ?debug, without
+   * driving the UI. Nothing is exported in normal use. */
+  if (window.location.search.indexOf('debug') !== -1) {
+    window.PAAT = {
+      Rng: Rng,
+      makeCheckItem: makeCheckItem,
+      makeCatItem: makeCatItem,
+      makeNumericalPaper: makeNumericalPaper,
+      makeVerbalPaper: makeVerbalPaper,
+    };
+  }
 })();

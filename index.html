@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Public Admin Aptitude Tests</title>
-<meta name="description" content="Timed practice drills for the Irish civil service Clerical Officer aptitude tests: transcription checking and two-stage categorising.">
+<meta name="description" content="Timed practice drills for all four components of the Irish civil service Clerical Officer aptitude tests: checking, categorising, numerical and verbal.">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1014'/%3E%3Cpath d='M8 17l5 5 11-12' fill='none' stroke='%237aa2f7' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
@@ -17,8 +17,8 @@
     <header class="masthead">
       <h1>Public Admin Aptitude Tests</h1>
       <p class="lede">
-        Timed drills for the two Clerical Officer tests that commercial practice banks
-        do not cover properly. Both reward a fixed scan order and a steady pace, not
+        All four components of the Clerical Officer battery, at the published
+        timings. Each one rewards a fixed method and a steady pace rather than
         cleverness.
       </p>
     </header>
@@ -56,6 +56,20 @@
         <p>Two lookups per question: invoice area, then purchase reference category. The tables never change mid-test.</p>
         <button class="btn primary" data-start="categorising">Start categorising</button>
       </article>
+
+      <article class="card">
+        <h2>Numerical</h2>
+        <p class="meta" id="meta-numerical">21 questions &middot; 20:00</p>
+        <p>A block of figures, then questions derived from it. Five options, calculator allowed. Percentages, totals, unit costs, rates.</p>
+        <button class="btn primary" data-start="numerical">Start numerical</button>
+      </article>
+
+      <article class="card">
+        <h2>Verbal</h2>
+        <p class="meta" id="meta-verbal">26 questions &middot; 18:00</p>
+        <p>A short passage, then statements to judge True, False or Cannot say. Answer only from the passage.</p>
+        <button class="btn primary" data-start="verbal">Start verbal</button>
+      </article>
     </div>
 
     <p class="menu-foot">
@@ -73,7 +87,7 @@
       <p class="clock" id="run-clock" aria-hidden="true">0:00</p>
     </header>
 
-    <div id="tables" class="tables" hidden></div>
+    <div id="context" class="tables" hidden></div>
     <div id="question" class="question"></div>
     <p id="hint" class="hint" aria-live="polite"></p>
   </section>
@@ -111,6 +125,7 @@
   </p>
 </footer>
 
+<script src="passages.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

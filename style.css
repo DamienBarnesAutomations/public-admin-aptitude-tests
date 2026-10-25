@@ -352,6 +352,66 @@ input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: var(--ac
 }
 .board td.num, .board th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
+/* ------------------------------------------------- numerical and verbal */
+
+.prompt { margin: 0 0 1rem; font-size: 1rem; }
+.statement { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.5; }
+
+.figures { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.figures caption {
+  text-align: left;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 0.45rem;
+}
+.figures th, .figures td { padding: 0.32rem 0.6rem 0.32rem 0; text-align: right; border-bottom: 1px solid var(--line); }
+.figures th:first-child, .figures td:first-child { text-align: left; }
+.figures thead th {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.figures-list { display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 1.5rem; margin: 0; }
+.figures-list > div { display: contents; }
+.figures-list dt { color: var(--muted); font-size: 0.85rem; }
+.figures-list dd { margin: 0; }
+
+.options { display: grid; gap: 0.5rem; }
+.options.three { grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  transition: background 100ms ease, border-color 100ms ease;
+}
+.option:hover { background: var(--panel-2); border-color: #39414f; }
+.option b { font-family: var(--mono); color: var(--accent); }
+
+.passage { margin: 0 0 1rem; padding: 0; border: none; }
+.passage h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+.passage p { margin: 0; line-height: 1.65; }
+
 /* ---------------------------------------------------------------- footer */
 
 .site-foot {
