@@ -38,6 +38,12 @@ here rather than two. The job simulation is the one place the grades differ:
 Executive paper is the one built here; use Half or Short for something closer to
 the Administrative length.
 
+## Install on a phone
+
+Open the site in Chrome (Android) or Safari (iOS) and use *Add to Home screen* /
+*Install app*. It runs full screen and works offline after the first visit. If
+you change a cached file, bump `CACHE` in `sw.js`.
+
 ## How to use it
 
 Keyboard only. No mouse needed.
