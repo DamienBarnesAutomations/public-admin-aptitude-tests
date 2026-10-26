@@ -214,6 +214,8 @@ const oneDrill = PAAT.computeReadiness([
 check(drillOf(oneDrill, 'numerical').benchmarkMet, 'a paper at target meets the benchmark');
 check(drillOf(oneDrill, 'numerical').consistencyMet, 'two recent papers at target are consistent');
 check(drillOf(oneDrill, 'numerical').recentMet, 'a run yesterday is recent');
+check(drillOf(oneDrill, 'numerical').checksMet === 3, 'a fully met drill has 3 of 3 checks');
+check(drillOf(oneDrill, 'verbal').checksMet === 0, 'an untouched drill has 0 of 3 checks');
 check(!oneDrill.ready, 'one drill ready does not make the whole grade ready');
 check(oneDrill.metCount === 3, `one drill met ${oneDrill.metCount} checks, expected 3`);
 

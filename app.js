@@ -1708,6 +1708,7 @@
         benchmarkMet: benchmarkMet,
         consistencyMet: consistencyMet,
         recentMet: recentMet,
+        checksMet: [benchmarkMet, consistencyMet, recentMet].filter(Boolean).length,
         lastPractised: lastPractised ? localIso(lastPractised) : null,
         daysSince: daysSince,
         gapQuestions: gapQuestions,
@@ -1859,6 +1860,8 @@
     return '<article class="card drill-card">' +
       '<div class="card-top"><h3>' + entry.label + '</h3>' +
       '<span class="pill ' + status.tone + '">' + status.label + '</span></div>' +
+      '<p class="meta">' + Math.round((entry.checksMet / 3) * 100) + '% ready &middot; ' +
+      entry.checksMet + ' of 3 checks</p>' +
       '<p class="meta">Best completed ' + best + ' &middot; target ' + report.target + '%</p>' +
       '<span class="bar"><i' + bar + ' style="width:' + width + '%"></i></span>' +
       '<p class="fine">' + entry.fullRuns + ' full ' + (entry.fullRuns === 1 ? 'paper' : 'papers') +
