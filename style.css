@@ -77,7 +77,7 @@ h3 { font-size: 1rem; margin-top: 1.75rem; }
 .field.field-check { flex-direction: row; align-items: center; gap: 0.55rem; color: var(--ink); }
 .field.field-check span { font-size: 0.9rem; }
 
-select, input[type="text"] {
+select, input[type="text"], input[type="number"], input[type="date"] {
   background: var(--panel-2);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -88,7 +88,7 @@ select, input[type="text"] {
   min-width: 12rem;
 }
 
-input[type="text"] { min-width: 9rem; font-family: var(--mono); }
+input[type="text"], input[type="number"] { min-width: 9rem; font-family: var(--mono); }
 
 input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); }
 
@@ -163,6 +163,104 @@ input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: var(--ac
 }
 
 .sep { opacity: 0.4; }
+
+/* -------------------------------------------------------------- readiness */
+
+.readiness-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem 0.75rem;
+  width: 100%;
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1.1rem;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.readiness-strip:hover { background: #191e26; border-color: #39414f; }
+.readiness-strip .strip-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.readiness-strip b { font-family: var(--mono); font-size: 1.2rem; line-height: 1; }
+.readiness-strip .strip-days { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+.readiness-strip .pill { margin-left: auto; }
+.readiness-strip.is-ready { border-color: #2f5a3c; background: #12201a; }
+
+.pill {
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+  white-space: nowrap;
+}
+.pill.ok { color: var(--ok); border-color: #2f5a3c; }
+.pill.warn { color: var(--warn); border-color: #5a4a22; }
+
+.readiness-head {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 1rem 1.5rem;
+  align-items: center;
+  margin: 1rem 0 0.75rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.readiness-score { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.readiness-score b { font-family: var(--mono); font-size: 2.3rem; line-height: 1; }
+.readiness-copy p { margin: 0.1rem 0; }
+.readiness-copy p:first-child { font-size: 1.02rem; }
+
+.readiness-bar {
+  height: 10px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 0 1.25rem;
+}
+.readiness-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 999px; }
+.readiness-bar i.ok { background: var(--ok); }
+
+.readiness-goal { margin-bottom: 1.5rem; }
+.readiness-goal .fine { margin: 0; flex: 1 1 100%; }
+
+.drill-card .card-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.drill-card .card-top h3 { margin: 0; }
+.drill-card .bar { display: block; margin: 0.1rem 0; }
+.bar i.ok { background: var(--ok); }
+
+.card-checks { display: grid; gap: 0.15rem; font-size: 0.82rem; color: var(--muted); }
+.card-checks .check::before { content: "\25cb\00a0"; }
+.card-checks .check.met { color: var(--ok); }
+.card-checks .check.met::before { content: "\2713\00a0"; }
+
+.checklist { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.5rem; max-width: 62ch; }
+.checklist li { position: relative; padding-left: 1.3rem; color: var(--muted); }
+.checklist li::before { content: "\2192"; position: absolute; left: 0; color: var(--accent); }
+.checklist b { color: var(--ink); }
+
+.ready-note { margin: 0.5rem 0 0; color: var(--ok); max-width: 62ch; }
+
+.readiness-note { margin: 1.5rem 0 0; max-width: 70ch; }
+
+@media (max-width: 520px) {
+  .readiness-head { grid-template-columns: 1fr; }
+  .readiness-score { flex-direction: row; align-items: baseline; gap: 0.75rem; }
+  .readiness-score b { font-size: 1.9rem; }
+}
 
 /* -------------------------------------------------------------- run view */
 
@@ -433,6 +531,9 @@ input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: var(--ac
   font-size: 0.78rem;
 }
 .site-foot p { margin: 0; max-width: 70ch; }
+
+.goal-msg { color: var(--warn); margin: 0; }
+.goal-msg:empty { display: none; }
 
 .chip:disabled { opacity: 0.3; cursor: default; }
 

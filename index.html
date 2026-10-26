@@ -56,6 +56,13 @@
 
     <p id="tier-note" class="fine tier-note"></p>
 
+    <button type="button" class="readiness-strip" id="open-readiness">
+      <span class="strip-label">Readiness</span>
+      <b id="strip-pct">0%</b>
+      <span class="strip-days" id="strip-days"></span>
+      <span class="pill" id="strip-state"></span>
+    </button>
+
     <div class="cards">
       <article class="card" data-card="checking">
         <h2>Checking</h2>
@@ -133,6 +140,50 @@
       <button class="btn" id="export-csv">Export CSV</button>
       <button class="btn danger" id="clear-board">Clear</button>
       <button class="btn" id="board-to-menu">Menu</button>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- readiness -->
+  <section id="view-readiness" class="view hidden" aria-labelledby="readiness-title">
+    <h2 id="readiness-title" tabindex="-1">Readiness</h2>
+    <p class="fine">Your own standard, checked against the runs stored in this browser. Nothing is uploaded.</p>
+
+    <div class="readiness-head">
+      <div class="readiness-score">
+        <b id="ready-pct">0%</b>
+        <span class="pill" id="ready-state">Not ready</span>
+      </div>
+      <div class="readiness-copy">
+        <p id="ready-countdown"></p>
+        <p id="ready-checks" class="fine"></p>
+        <p id="ready-pace" class="fine"></p>
+      </div>
+    </div>
+    <div class="readiness-bar" aria-hidden="true"><i id="ready-fill"></i></div>
+
+    <div class="options readiness-goal">
+      <label class="field">
+        <span>Exam date</span>
+        <input id="goal-date" type="date">
+      </label>
+      <label class="field">
+        <span>Target score %</span>
+        <input id="goal-target" type="number" inputmode="numeric" min="50" max="100" step="1">
+      </label>
+      <p class="fine" id="goal-tier-note"></p>
+      <p class="fine goal-msg" id="goal-msg" role="status" aria-live="polite"></p>
+    </div>
+
+    <div id="readiness-body"></div>
+
+    <p class="fine readiness-note">
+      The target is a training standard you set, not a PAS pass mark &mdash; PAS does
+      not publish one. A full paper only counts towards the target if you finished it
+      inside the clock; timed-out runs still count as practice.
+    </p>
+
+    <div class="actions">
+      <button class="btn" id="readiness-to-menu">Menu</button>
     </div>
   </section>
 

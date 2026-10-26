@@ -841,12 +841,14 @@
       note: 'Four tests: checking, categorising, numerical and verbal. The job ' +
         'simulation is an Executive / Administrative test, included here for extra practice.',
       drills: ['checking', 'categorising', 'numerical', 'verbal', 'jobsim'],
+      required: ['checking', 'categorising', 'numerical', 'verbal'],
     },
     executive: {
       label: 'Executive / Administrative',
       note: 'Three tests: numerical, verbal and a job simulation. The simulation is 25 ' +
         'questions in 35 minutes at Executive level; Administrative sits 18 in 30.',
       drills: ['numerical', 'verbal', 'jobsim'],
+      required: ['numerical', 'verbal', 'jobsim'],
     },
   };
 
@@ -873,6 +875,12 @@
     jobsim: 'Job simulation',
   };
   const STORE_KEY = 'paat.runs.v1';
+  const GOAL_KEY = 'paat.goal.v1';
+  const GOAL_DEFAULT = { date: '2026-11-10', target: 80 };
+  const CONSISTENCY_TOLERANCE = 5;
+  const RECENT_DAYS = 7;
+
+  let goal = { date: GOAL_DEFAULT.date, target: GOAL_DEFAULT.target };
 
   const state = {
     view: 'menu',
@@ -906,6 +914,7 @@
     run: $('#view-run'),
     results: $('#view-results'),
     board: $('#view-board'),
+    readiness: $('#view-readiness'),
   };
 
   function showView(name, focusSelector) {
@@ -913,6 +922,7 @@
       views[key].classList.toggle('hidden', key !== name);
     });
     state.view = name;
+    if (name === 'menu') renderReadinessStrip();
     if (focusSelector) {
       const target = $(focusSelector);
       if (target) target.focus();
@@ -1499,6 +1509,9 @@
       perfect: run.perfect,
     };
     RUN_NUMBERS.forEach(function (field) { clean[field] = run[field]; });
+    if (run.length === 'full' || run.length === 'half' || run.length === 'short') {
+      clean.length = run.length;
+    }
     return clean;
   }
 
@@ -1525,6 +1538,7 @@
       perfect: summary.perfect,
       seconds: Math.round(elapsed),
       seed: state.seed,
+      length: state.length,
       outcome: reason,
     });
     try {
@@ -1532,6 +1546,13 @@
     } catch (error) {
       /* Storage full or blocked: the drill still works, it just forgets. */
     }
+  }
+
+  /* Stored in UTC; show the viewer's local time. */
+  function localStamp(when) {
+    const instant = new Date(when + 'Z');
+    if (Number.isNaN(instant.getTime())) return when.replace('T', ' ');
+    return localIso(instant) + ' ' + pad2(instant.getHours()) + ':' + pad2(instant.getMinutes());
   }
 
   function renderBoard() {
@@ -1545,7 +1566,7 @@
       '<th scope="col">Points</th><th scope="col">Perfect</th><th scope="col">Time</th>' +
       '<th scope="col">Seed</th></tr></thead><tbody>';
     runs.forEach(function (run) {
-      html += `<tr><td class="mono">${run.when.replace('T', ' ')}</td>` +
+      html += `<tr><td class="mono">${localStamp(run.when)}</td>` +
         `<td>${run.tier === 'executive' ? 'Executive' : 'Clerical'}</td>` +
         `<td>${LABELS[run.drill] || run.drill}</td>` +
         `<td class="num">${run.attempted}/${run.offered}</td>` +
@@ -1565,7 +1586,7 @@
       'perfect', 'seconds_used', 'seed', 'outcome'];
     const lines = [header.join(',')];
     runs.forEach(function (run) {
-      lines.push([run.when, run.tier, run.drill, run.offered, run.attempted, run.points, run.max,
+      lines.push([run.when + 'Z', run.tier, run.drill, run.offered, run.attempted, run.points, run.max,
         run.perfect, run.seconds, run.seed, run.outcome].join(','));
     });
     const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
@@ -1577,6 +1598,388 @@
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  /* ----------------------------------------------------------- readiness */
+
+  /* Readiness is defined by checks, not a progress-bar guess: for every drill
+   * in the selected grade, a completed full paper must reach the target, the
+   * last two completed full papers must stay within five points of it, and the
+   * drill must have been practised in the last week. A timed-out run counts as
+   * practice but cannot set the benchmark: points/attempted flatters a paper
+   * you did not finish, and running out of time is what the drill trains away. */
+
+  function clampTarget(value) {
+    return Math.min(100, Math.max(50, Math.round(value)));
+  }
+
+  function parseDay(text) {
+    if (typeof text !== 'string') return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+    if (!match) return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month)) return null;
+    return new Date(year, month - 1, day);
+  }
+
+  function localIso(day) {
+    return `${day.getFullYear()}-${pad2(day.getMonth() + 1)}-${pad2(day.getDate())}`;
+  }
+
+  function localDay() {
+    return localIso(new Date());
+  }
+
+  function dayGap(from, to) {
+    return Math.round((to.getTime() - from.getTime()) / 86400000);
+  }
+
+  /* Runs are stamped in UTC without a zone marker, so convert to the viewer's
+   * local calendar day before comparing with "today". */
+  function runDay(run) {
+    const instant = new Date(String(run.when) + 'Z');
+    if (Number.isNaN(instant.getTime())) return parseDay(String(run.when).slice(0, 10));
+    return new Date(instant.getFullYear(), instant.getMonth(), instant.getDate());
+  }
+
+  function runPct(run) {
+    return run.max > 0 ? (run.points / run.max) * 100 : 0;
+  }
+
+  /* Runs stored before the length field existed are matched by question count.
+   * A half paper shares no count with the full one, so this stays unambiguous. */
+  function isFullRun(run) {
+    if (run.length) return run.length === 'full';
+    const plan = PLANS[run.tier] && PLANS[run.tier][run.drill];
+    return !!plan && run.offered === plan.full.n;
+  }
+
+  function byWhenDesc(a, b) {
+    return a.when < b.when ? 1 : a.when > b.when ? -1 : 0;
+  }
+
+  function computeReadiness(runs, settings) {
+    const options = settings || {};
+    const tier = TIERS[options.tier] ? options.tier : 'clerical';
+    const requestedTarget = Number(options.target);
+    const target = options.target != null && Number.isFinite(requestedTarget)
+      ? clampTarget(requestedTarget) : GOAL_DEFAULT.target;
+    const exam = parseDay(options.examDate) || parseDay(GOAL_DEFAULT.date);
+    const today = parseDay(options.today) || parseDay(localDay());
+    const daysLeft = exam && today ? dayGap(today, exam) : null;
+    const floor = Math.max(0, target - CONSISTENCY_TOLERANCE);
+    const all = Array.isArray(runs) ? runs : [];
+
+    const drills = TIERS[tier].required.map(function (name) {
+      const mine = all.filter(function (run) { return run.tier === tier && run.drill === name; });
+      const full = mine.filter(isFullRun);
+      const completed = full.filter(function (run) { return run.outcome === 'done'; })
+        .slice().sort(byWhenDesc);
+      const bestPct = completed.length
+        ? completed.reduce(function (best, run) { return Math.max(best, runPct(run)); }, 0)
+        : null;
+      const benchmarkMet = bestPct !== null && bestPct >= target;
+      const lastTwo = completed.slice(0, 2);
+      const consistencyMet = lastTwo.length === 2 && lastTwo.every(function (run) {
+        return runPct(run) >= floor;
+      });
+
+      let lastPractised = null;
+      mine.forEach(function (run) {
+        const day = runDay(run);
+        if (day && (!lastPractised || day > lastPractised)) lastPractised = day;
+      });
+      const daysSince = lastPractised && today ? dayGap(lastPractised, today) : null;
+      const recentMet = daysSince !== null && daysSince <= RECENT_DAYS;
+
+      const fullN = PLANS[tier][name].full.n;
+      const gapQuestions = benchmarkMet || bestPct === null ? 0
+        : Math.max(1, Math.ceil(((target - bestPct) / 100) * fullN));
+
+      return {
+        drill: name,
+        label: LABELS[name],
+        fullN: fullN,
+        fullRuns: full.length,
+        completed: completed.length,
+        bestPct: bestPct,
+        benchmarkMet: benchmarkMet,
+        consistencyMet: consistencyMet,
+        recentMet: recentMet,
+        lastPractised: lastPractised ? localIso(lastPractised) : null,
+        daysSince: daysSince,
+        gapQuestions: gapQuestions,
+      };
+    });
+
+    const checks = [];
+    drills.forEach(function (entry) {
+      checks.push({ drill: entry.drill, met: entry.benchmarkMet });
+      checks.push({ drill: entry.drill, met: entry.consistencyMet });
+      checks.push({ drill: entry.drill, met: entry.recentMet });
+    });
+
+    const metCount = checks.filter(function (check) { return check.met; }).length;
+    const ready = metCount === checks.length && (daysLeft === null || daysLeft >= 0);
+    const neededPapers = drills.reduce(function (sum, entry) {
+      const unfinished = entry.benchmarkMet && entry.consistencyMet ? 0 : 1;
+      return sum + Math.max(0, 2 - entry.completed, unfinished);
+    }, 0);
+
+    return {
+      tier: tier,
+      tierLabel: TIERS[tier].label,
+      target: target,
+      floor: floor,
+      exam: exam,
+      daysLeft: daysLeft,
+      drills: drills,
+      metCount: metCount,
+      total: checks.length,
+      pct: checks.length ? Math.round((metCount / checks.length) * 100) : 0,
+      ready: ready,
+      neededPapers: neededPapers,
+    };
+  }
+
+  function loadGoal() {
+    try {
+      const raw = window.localStorage.getItem(GOAL_KEY);
+      return normaliseGoal(raw ? JSON.parse(raw) : null);
+    } catch (error) {
+      return normaliseGoal(null);
+    }
+  }
+
+  function normaliseGoal(parsed) {
+    const date = parsed && parseDay(parsed.date) ? parsed.date : GOAL_DEFAULT.date;
+    const target = parsed && parsed.target != null && Number.isFinite(Number(parsed.target))
+      ? clampTarget(Number(parsed.target)) : GOAL_DEFAULT.target;
+    return { date: date, target: target };
+  }
+
+  function saveGoal() {
+    try {
+      window.localStorage.setItem(GOAL_KEY, JSON.stringify(goal));
+    } catch (error) {
+      /* Storage blocked: the settings hold for this visit only. */
+    }
+  }
+
+  function readinessReport() {
+    return computeReadiness(loadRuns(), {
+      tier: state.tier,
+      target: goal.target,
+      examDate: goal.date,
+      today: localDay(),
+    });
+  }
+
+  function longDay(day) {
+    return day.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function shortDay(text) {
+    const day = parseDay(text);
+    return day ? day.toLocaleDateString('en-IE', { day: 'numeric', month: 'short' }) : 'never';
+  }
+
+  function countdownText(report) {
+    if (report.daysLeft === null) return 'No exam date set.';
+    if (report.daysLeft < 0) return 'The exam date has passed. Set a new one below.';
+    if (report.daysLeft === 0) return 'Exam day \u2014 ' + longDay(report.exam);
+    const days = report.daysLeft === 1 ? '1 day' : report.daysLeft + ' days';
+    return days + ' to go \u2014 ' + longDay(report.exam);
+  }
+
+  function paceText(report) {
+    if (report.ready) return 'Every check is met. Keep one short drill a day until the exam.';
+    if (report.daysLeft !== null && report.daysLeft < 0) return 'Set a new exam date to restart the countdown.';
+    if (!report.neededPapers) return 'No full papers outstanding \u2014 repeat one to hold the level.';
+
+    const papers = report.neededPapers + (report.neededPapers === 1 ? ' full paper' : ' full papers');
+    if (report.daysLeft === null) return papers + ' still to sit.';
+    if (report.daysLeft === 0) return papers + ' still to sit, and the exam is today.';
+
+    const ratio = report.daysLeft / report.neededPapers;
+    let pace;
+    if (ratio >= 2) pace = 'about one every ' + Math.round(ratio) + ' days';
+    else if (ratio >= 1) pace = 'about one a day';
+    else pace = Math.ceil(report.neededPapers / report.daysLeft) + ' a day';
+    const left = report.daysLeft === 1 ? '1 day left' : report.daysLeft + ' days left';
+    return papers + ' still to sit, ' + left + ' \u2014 ' + pace + '.';
+  }
+
+  function drillStatus(entry) {
+    if (entry.benchmarkMet && entry.consistencyMet && entry.recentMet) {
+      return { tone: 'ok', label: 'Ready' };
+    }
+    if (entry.benchmarkMet) return { tone: 'warn', label: 'Needs a repeat' };
+    if (entry.completed) return { tone: 'warn', label: 'Chasing target' };
+    if (entry.fullRuns) return { tone: '', label: 'Finish one' };
+    return { tone: '', label: 'No full paper' };
+  }
+
+  function drillGapText(entry, report) {
+    if (entry.benchmarkMet && entry.consistencyMet) return 'At target and repeatable.';
+    if (entry.benchmarkMet) {
+      return 'Best completed paper ' + Math.round(entry.bestPct) + '%. The last two completed ' +
+        'full papers need to be at ' + report.floor + '% or better.';
+    }
+    if (entry.completed) {
+      return 'Best completed paper ' + Math.round(entry.bestPct) + '%. ' +
+        entry.gapQuestions + (entry.gapQuestions === 1 ? ' more right answer' : ' more right answers') +
+        ' on a ' + entry.fullN + '-question paper would reach ' + report.target + '%.';
+    }
+    if (entry.fullRuns) {
+      return 'Only timed-out full papers so far \u2014 finish one inside the clock to set a benchmark.';
+    }
+    return 'No full paper yet.';
+  }
+
+  function checkRowsHtml(entry, report) {
+    const rows = [
+      ['Hit ' + report.target + '% on a full paper', entry.benchmarkMet],
+      ['Repeat it (' + report.floor + '%+ twice running)', entry.consistencyMet],
+      ['Practised in the last ' + RECENT_DAYS + ' days', entry.recentMet],
+    ];
+    return rows.map(function (row) {
+      return '<span class="check' + (row[1] ? ' met' : '') + '">' + row[0] + '</span>';
+    }).join('');
+  }
+
+  function drillCardHtml(entry, report) {
+    const status = drillStatus(entry);
+    const best = entry.bestPct === null ? '\u2014' : Math.round(entry.bestPct) + '%';
+    const width = entry.bestPct === null ? 0
+      : Math.min(100, Math.round((entry.bestPct / report.target) * 100));
+    const bar = entry.benchmarkMet ? ' class="ok"' : '';
+    return '<article class="card drill-card">' +
+      '<div class="card-top"><h3>' + entry.label + '</h3>' +
+      '<span class="pill ' + status.tone + '">' + status.label + '</span></div>' +
+      '<p class="meta">Best completed ' + best + ' &middot; target ' + report.target + '%</p>' +
+      '<span class="bar"><i' + bar + ' style="width:' + width + '%"></i></span>' +
+      '<p class="fine">' + entry.fullRuns + ' full ' + (entry.fullRuns === 1 ? 'paper' : 'papers') +
+      ' &middot; ' + entry.completed + ' completed &middot; last practised ' +
+      (entry.lastPractised ? shortDay(entry.lastPractised) : 'never') + '</p>' +
+      '<p class="fine">' + drillGapText(entry, report) + '</p>' +
+      (entry.drill === 'jobsim'
+        ? '<p class="fine">Marked 0–4 a question, so ' + report.target + '% is an average of ' +
+          (report.target * 4 / 100).toFixed(1) + ' out of 4.</p>'
+        : '') +
+      '<div class="card-checks">' + checkRowsHtml(entry, report) + '</div>' +
+      '<button type="button" class="btn primary" data-ready-start="' + entry.drill + '">' +
+      'Sit a full paper</button></article>';
+  }
+
+  function whatsLeftHtml(report) {
+    if (report.ready) {
+      return '<p class="ready-note">Every check is met. By the standard you set, you are prepared.</p>';
+    }
+    const items = [];
+    report.drills.forEach(function (entry) {
+      if (!entry.benchmarkMet) {
+        let text = '<b>' + entry.label + '</b> \u2014 score ' + report.target +
+          '% on a completed full paper.';
+        if (entry.completed) {
+          text += ' Best so far ' + Math.round(entry.bestPct) + '%: ' + entry.gapQuestions +
+            (entry.gapQuestions === 1 ? ' more right answer.' : ' more right answers.');
+        } else if (entry.fullRuns) {
+          text += ' Every full paper so far ran out of time.';
+        } else {
+          text += ' None sat yet.';
+        }
+        items.push(text);
+      }
+      if (!entry.consistencyMet) {
+        let text = '<b>' + entry.label + '</b> \u2014 make it repeatable: the last two completed ' +
+          'full papers at ' + report.floor + '% or better.';
+        if (entry.completed < 2) {
+          const need = 2 - entry.completed;
+          text += ' Sit ' + need + ' more completed full ' + (need === 1 ? 'paper.' : 'papers.');
+        }
+        items.push(text);
+      }
+      if (!entry.recentMet) {
+        items.push('<b>' + entry.label + '</b> \u2014 ' + (entry.lastPractised
+          ? 'last practised ' + shortDay(entry.lastPractised) + '; do any length this week.'
+          : 'not practised yet; do any length this week.'));
+      }
+    });
+    return '<ul class="checklist">' + items.map(function (item) {
+      return '<li>' + item + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function renderReadiness() {
+    const report = readinessReport();
+    $('#goal-date').value = goal.date;
+    $('#goal-target').value = String(goal.target);
+    $('#goal-tier-note').textContent = 'Tracking ' + report.tierLabel +
+      '. Change the grade on the menu. Job simulation is optional for Clerical.';
+    $('#ready-pct').textContent = report.pct + '%';
+    const statePill = $('#ready-state');
+    statePill.textContent = report.ready ? 'Ready' : 'Not ready';
+    statePill.className = 'pill' + (report.ready ? ' ok' : '');
+    $('#ready-countdown').textContent = countdownText(report);
+    $('#ready-checks').textContent = report.metCount + ' of ' + report.total + ' checks met.';
+    $('#ready-pace').textContent = paceText(report);
+
+    const fill = $('#ready-fill');
+    fill.style.width = report.pct + '%';
+    fill.className = report.ready ? 'ok' : '';
+
+    let html = '<div class="cards drill-cards">';
+    report.drills.forEach(function (entry) { html += drillCardHtml(entry, report); });
+    html += '</div>';
+    html += '<h3>What is left</h3>' + whatsLeftHtml(report);
+    $('#readiness-body').innerHTML = html;
+  }
+
+  function renderReadinessStrip() {
+    const report = readinessReport();
+    const strip = $('#open-readiness');
+    if (!strip) return;
+    $('#strip-pct').textContent = report.pct + '%';
+
+    let when;
+    if (report.daysLeft === null) when = 'no exam date';
+    else if (report.daysLeft < 0) when = 'exam date passed';
+    else if (report.daysLeft === 0) when = 'exam day';
+    else when = report.daysLeft + (report.daysLeft === 1 ? ' day to go' : ' days to go');
+    $('#strip-days').textContent = when;
+
+    const note = $('#strip-state');
+    note.textContent = report.ready ? 'Ready' : report.metCount + '/' + report.total;
+    note.className = 'pill' + (report.ready ? ' ok' : '');
+    strip.classList.toggle('is-ready', report.ready);
+    strip.setAttribute('aria-label', 'Readiness: ' + report.pct + '% ready, ' +
+      report.metCount + ' of ' + report.total + ' checks met, ' + when);
+  }
+
+  function commitGoal() {
+    const typedDate = $('#goal-date').value;
+    const problems = [];
+    let date = goal.date;
+    if (parseDay(typedDate)) date = typedDate;
+    else problems.push('That exam date is not valid, so ' + shortDay(goal.date) + ' is kept.');
+
+    const parsed = Number.parseInt($('#goal-target').value, 10);
+    let target = goal.target;
+    if (Number.isFinite(parsed)) {
+      target = clampTarget(parsed);
+      if (target !== parsed) problems.push('The target must be between 50 and 100, so it is set to ' + target + '%.');
+    } else {
+      problems.push('The target must be a number from 50 to 100, so ' + goal.target + '% is kept.');
+    }
+
+    goal = { date: date, target: target };
+    saveGoal();
+    renderReadiness();
+    renderReadinessStrip();
+    $('#goal-msg').textContent = problems.join(' ');
   }
 
   /* ---------------------------------------------------------------- utils */
@@ -1673,6 +2076,7 @@
   $('#opt-tier').addEventListener('change', function () {
     state.tier = $('#opt-tier').value;
     updateMeta();
+    renderReadinessStrip();
   });
 
   $('#again-same').addEventListener('click', function () {
@@ -1700,7 +2104,29 @@
     renderBoard();
   });
 
+  $('#open-readiness').addEventListener('click', function () {
+    renderReadiness();
+    showView('readiness', '#readiness-title');
+  });
+  $('#readiness-to-menu').addEventListener('click', function () {
+    showView('menu', '#view-menu h1');
+  });
+  $('#readiness-body').addEventListener('click', function (event) {
+    const button = event.target.closest('[data-ready-start]');
+    if (!button) return;
+    const drill = button.dataset.readyStart;
+    if (!PLANS[state.tier][drill]) return;
+    state.length = 'full';
+    $('#opt-length').value = 'full';
+    $('#opt-tier').value = state.tier;
+    startRun(drill, {});
+  });
+  $('#goal-date').addEventListener('change', commitGoal);
+  $('#goal-target').addEventListener('change', commitGoal);
+
+  goal = loadGoal();
   updateMeta();
+  renderReadinessStrip();
 
   /* Test seam: lets the generators be exercised directly with ?debug, without
    * driving the UI. Nothing is exported in normal use. */
@@ -1712,6 +2138,9 @@
       makeNumericalPaper: makeNumericalPaper,
       makeVerbalPaper: makeVerbalPaper,
       makeJobSimPaper: makeJobSimPaper,
+      computeReadiness: computeReadiness,
+      isFullRun: isFullRun,
+      parseDay: parseDay,
     };
   }
 })();

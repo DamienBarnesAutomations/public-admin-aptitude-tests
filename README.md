@@ -72,6 +72,32 @@ time. If the deadline passes before you submit, the run ends.
 Every completed run is stored in `localStorage` in your browser. Nothing is
 uploaded. Export gives you a CSV. Clearing is permanent.
 
+### Readiness
+
+The strip on the menu shows how close you are to the standard you set. The exam
+date (default 10 November) and target score (default 80%) are editable on the
+Readiness screen and stored in this browser.
+
+A drill counts as ready when all three checks pass:
+
+- **Hit the target** — a completed full paper at or above the target.
+- **Repeat it** — the last two completed full papers at or above target − 5.
+- **Recently practised** — any run in the last seven days.
+
+"Completed" means you answered every question inside the clock. A timed-out
+full paper still counts as practice but cannot set the benchmark, because
+points divided by questions attempted flatters a paper you did not finish. Half
+and short papers count as practice, never as benchmarks.
+
+The percentage is checks met, not a score: twelve checks for Clerical (four
+drills) and nine for Executive (three). The screen also shows the gap in
+correct answers, how many full papers are still outstanding, and a pace to the
+exam date. Job simulation is not required for Clerical.
+
+The target is a training standard, not a PAS pass mark — PAS does not publish
+one. Runs recorded before the Readiness screen existed still count: their length
+is inferred from the question count.
+
 ## Scoring
 
 **Checking** is scored per column, four points a question:
