@@ -21,6 +21,7 @@ timings.
 | **Categorising** | 40 | 10:00 | Two lookups per question: invoice area, then purchase reference category. |
 | **Numerical** | 21 | 20:00 | A block of figures, then questions derived from it. Five options, calculator allowed. |
 | **Verbal** | 26 | 18:00 | A short passage, then statements to judge True, False or Cannot say. |
+| **Job simulation** | 25 | 35:00 | Not part of the Clerical battery; offered here for extra practice. See the Executive table below. |
 
 ### Executive / Administrative
 

@@ -838,8 +838,9 @@
   const TIERS = {
     clerical: {
       label: 'Clerical Officer',
-      note: 'Four tests: checking, categorising, numerical and verbal.',
-      drills: ['checking', 'categorising', 'numerical', 'verbal'],
+      note: 'Four tests: checking, categorising, numerical and verbal. The job ' +
+        'simulation is an Executive / Administrative test, included here for extra practice.',
+      drills: ['checking', 'categorising', 'numerical', 'verbal', 'jobsim'],
     },
     executive: {
       label: 'Executive / Administrative',
@@ -855,6 +856,7 @@
       categorising: { full: { n: 40, s: 600 }, half: { n: 20, s: 300 }, short: { n: 10, s: 150 } },
       numerical: { full: { n: 21, s: 1200 }, half: { n: 11, s: 600 }, short: { n: 6, s: 300 } },
       verbal: { full: { n: 26, s: 1080 }, half: { n: 13, s: 540 }, short: { n: 6, s: 240 } },
+      jobsim: { full: { n: 25, s: 2100 }, half: { n: 12, s: 1050 }, short: { n: 8, s: 600 } },
     },
     executive: {
       numerical: { full: { n: 36, s: 1800 }, half: { n: 18, s: 900 }, short: { n: 8, s: 400 } },
