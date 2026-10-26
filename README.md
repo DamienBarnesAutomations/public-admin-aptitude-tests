@@ -21,6 +21,7 @@ timings.
 | **Categorising** | 40 | 10:00 | Two lookups per question: invoice area, then purchase reference category. |
 | **Numerical** | 21 | 20:00 | A block of figures, then questions derived from it. Five options, calculator allowed. |
 | **Verbal** | 26 | 18:00 | A short passage, then statements to judge True, False or Cannot say. |
+| **Job simulation** | 25 | 35:00 | Not part of the Clerical battery; offered here for extra practice. See the Executive table below. |
 
 ### Executive / Administrative
 
@@ -36,6 +37,12 @@ here rather than two. The job simulation is the one place the grades differ:
 25 questions in 35 minutes at Executive level, 18 in 30 at Administrative. The
 Executive paper is the one built here; use Half or Short for something closer to
 the Administrative length.
+
+## Install on a phone
+
+Open the site in Chrome (Android) or Safari (iOS) and use *Add to Home screen* /
+*Install app*. It runs full screen and works offline after the first visit. If
+you change a cached file, bump `CACHE` in `sw.js`.
 
 ## How to use it
 

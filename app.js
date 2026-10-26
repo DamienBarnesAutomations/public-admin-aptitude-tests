@@ -838,8 +838,9 @@
   const TIERS = {
     clerical: {
       label: 'Clerical Officer',
-      note: 'Four tests: checking, categorising, numerical and verbal.',
-      drills: ['checking', 'categorising', 'numerical', 'verbal'],
+      note: 'Four tests: checking, categorising, numerical and verbal. The job ' +
+        'simulation is an Executive / Administrative test, included here for extra practice.',
+      drills: ['checking', 'categorising', 'numerical', 'verbal', 'jobsim'],
     },
     executive: {
       label: 'Executive / Administrative',
@@ -855,6 +856,7 @@
       categorising: { full: { n: 40, s: 600 }, half: { n: 20, s: 300 }, short: { n: 10, s: 150 } },
       numerical: { full: { n: 21, s: 1200 }, half: { n: 11, s: 600 }, short: { n: 6, s: 300 } },
       verbal: { full: { n: 26, s: 1080 }, half: { n: 13, s: 540 }, short: { n: 6, s: 240 } },
+      jobsim: { full: { n: 25, s: 2100 }, half: { n: 12, s: 1050 }, short: { n: 8, s: 600 } },
     },
     executive: {
       numerical: { full: { n: 36, s: 1800 }, half: { n: 18, s: 900 }, short: { n: 8, s: 400 } },
@@ -955,9 +957,10 @@
           `<b>${pair[0]}</b><span>${pair[1]}</span></button>`;
       });
     html += '<button type="button" class="chip chip-clean" data-column="N">' +
-      '<b>N</b><span>No error</span></button></div>';
+      '<b>N</b><span>No error</span></button></div>' + actionBarHtml();
 
     $('#question').innerHTML = html;
+    wireActionBar();
     $('#chips').addEventListener('click', function (event) {
       const button = event.target.closest('.chip');
       if (!button) return;
@@ -976,8 +979,36 @@
         <div><dt>Amount</dt><dd class="mono">${escapeHtml(item.amount)}</dd></div>
         <div><dt>Date</dt><dd class="mono">${item.when}</dd></div>
       </dl>
-      <div class="entry" id="entry"></div>`;
+      <div class="entry" id="entry"></div>
+      <div class="chips keypad" id="keypad">` +
+      'ABCDEF'.split('').map(function (letter) {
+        return `<button type="button" class="chip" data-letter="${letter}"><b>${letter}</b></button>`;
+      }).join('') + '</div>' + actionBarHtml();
+    wireActionBar();
+    $('#keypad').addEventListener('click', function (event) {
+      const button = event.target.closest('.chip');
+      if (!button) return;
+      button.blur();
+      pushEntry(button.dataset.letter);
+    });
     paintEntry();
+  }
+
+  /* On-screen Clear / Submit for devices without a keyboard. */
+  function actionBarHtml() {
+    return '<div class="actions-bar">' +
+      '<button type="button" class="btn" data-act="clear">Clear</button>' +
+      '<button type="button" class="btn primary" data-act="submit">Submit</button></div>';
+  }
+
+  function wireActionBar() {
+    $('#question').querySelector('.actions-bar').addEventListener('click', function (event) {
+      const button = event.target.closest('[data-act]');
+      if (!button) return;
+      button.blur();
+      if (button.dataset.act === 'submit') submitAnswer();
+      else clearAnswer();
+    });
   }
 
   function paintChips() {
