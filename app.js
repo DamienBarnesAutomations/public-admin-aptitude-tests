@@ -955,9 +955,10 @@
           `<b>${pair[0]}</b><span>${pair[1]}</span></button>`;
       });
     html += '<button type="button" class="chip chip-clean" data-column="N">' +
-      '<b>N</b><span>No error</span></button></div>';
+      '<b>N</b><span>No error</span></button></div>' + actionBarHtml();
 
     $('#question').innerHTML = html;
+    wireActionBar();
     $('#chips').addEventListener('click', function (event) {
       const button = event.target.closest('.chip');
       if (!button) return;
@@ -976,8 +977,36 @@
         <div><dt>Amount</dt><dd class="mono">${escapeHtml(item.amount)}</dd></div>
         <div><dt>Date</dt><dd class="mono">${item.when}</dd></div>
       </dl>
-      <div class="entry" id="entry"></div>`;
+      <div class="entry" id="entry"></div>
+      <div class="chips keypad" id="keypad">` +
+      'ABCDEF'.split('').map(function (letter) {
+        return `<button type="button" class="chip" data-letter="${letter}"><b>${letter}</b></button>`;
+      }).join('') + '</div>' + actionBarHtml();
+    wireActionBar();
+    $('#keypad').addEventListener('click', function (event) {
+      const button = event.target.closest('.chip');
+      if (!button) return;
+      button.blur();
+      pushEntry(button.dataset.letter);
+    });
     paintEntry();
+  }
+
+  /* On-screen Clear / Submit for devices without a keyboard. */
+  function actionBarHtml() {
+    return '<div class="actions-bar">' +
+      '<button type="button" class="btn" data-act="clear">Clear</button>' +
+      '<button type="button" class="btn primary" data-act="submit">Submit</button></div>';
+  }
+
+  function wireActionBar() {
+    $('#question').querySelector('.actions-bar').addEventListener('click', function (event) {
+      const button = event.target.closest('[data-act]');
+      if (!button) return;
+      button.blur();
+      if (button.dataset.act === 'submit') submitAnswer();
+      else clearAnswer();
+    });
   }
 
   function paintChips() {
