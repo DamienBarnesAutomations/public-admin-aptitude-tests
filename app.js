@@ -950,14 +950,14 @@
       return `${pair[0]} = ${pair[1]}`;
     }).join(' &middot; ') + '</p>';
 
-    html += '<div class="chips" id="chips">';
+    html += '<div class="dock"><div class="chips" id="chips">';
     [['A', 'Plot code'], ['B', 'Start date'], ['C', 'Contact'], ['D', 'Plot size']]
       .forEach(function (pair) {
         html += `<button type="button" class="chip" data-column="${pair[0]}">` +
           `<b>${pair[0]}</b><span>${pair[1]}</span></button>`;
       });
     html += '<button type="button" class="chip chip-clean" data-column="N">' +
-      '<b>N</b><span>No error</span></button></div>' + actionBarHtml();
+      '<b>N</b><span>No error</span></button></div>' + actionBarHtml() + '</div>';
 
     $('#question').innerHTML = html;
     wireActionBar();
@@ -972,6 +972,7 @@
 
   function renderCategorising(item) {
     $('#question').innerHTML = `
+      <div class="dock">
       <dl class="log">
         <div><dt>Invoice for</dt><dd>${escapeHtml(item.invoiceFor)}</dd></div>
         <div><dt>Supplier type</dt><dd>${escapeHtml(item.supplier)}</dd></div>
@@ -983,7 +984,7 @@
       <div class="chips keypad" id="keypad">` +
       'ABCDEF'.split('').map(function (letter) {
         return `<button type="button" class="chip" data-letter="${letter}"><b>${letter}</b></button>`;
-      }).join('') + '</div>' + actionBarHtml();
+      }).join('') + '</div>' + actionBarHtml() + '</div>';
     wireActionBar();
     $('#keypad').addEventListener('click', function (event) {
       const button = event.target.closest('.chip');
@@ -1011,6 +1012,11 @@
     });
   }
 
+  /* Hints name keys on a keyboard and taps on a touch screen. */
+  function touchUi() {
+    return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  }
+
   function paintChips() {
     const chips = document.querySelectorAll('#chips .chip');
     if (!chips.length) return;
@@ -1022,12 +1028,18 @@
     });
 
     const hint = $('#hint');
+    const touch = touchUi();
     if (state.clean) {
-      hint.textContent = 'Claimed clean. Enter to submit, Backspace to clear.';
+      hint.textContent = touch
+        ? 'Claimed clean. Tap Submit, or Clear to undo.'
+        : 'Claimed clean. Enter to submit, Backspace to clear.';
     } else if (state.selected.size) {
-      hint.textContent = `Marked ${[...state.selected].sort().join(', ')}. Enter to submit.`;
+      const marked = [...state.selected].sort().join(', ');
+      hint.textContent = touch ? `Marked ${marked}. Tap Submit.` : `Marked ${marked}. Enter to submit.`;
     } else {
-      hint.textContent = 'Type A\u2013D to mark a column, N for a clean record, Enter to submit.';
+      hint.textContent = touch
+        ? 'Tap each column with an error, or No error for a clean record, then Submit.'
+        : 'Type A\u2013D to mark a column, N for a clean record, Enter to submit.';
     }
   }
 
@@ -1037,9 +1049,19 @@
     const area = state.entry[0] || '\u2014';
     const ref = state.entry[1] || '\u2014';
     entry.innerHTML = `Area <b>${area}</b> &nbsp; Reference <b>${ref}</b>`;
+    const touch = touchUi();
     $('#hint').textContent = state.entry.length < 2
-      ? 'Type the invoice area (A\u2013F), then the reference category (A\u2013C).'
-      : 'Enter to submit, Backspace to undo.';
+      ? (touch ? 'Tap the invoice area (A\u2013F), then the reference category (A\u2013C).'
+        : 'Type the invoice area (A\u2013F), then the reference category (A\u2013C).')
+      : (touch ? 'Tap Submit, or Clear to undo.' : 'Enter to submit, Backspace to undo.');
+
+    /* Dim keys that cannot be entered next, so a tap is never silently ignored. */
+    document.querySelectorAll('#keypad .chip').forEach(function (key) {
+      const letter = key.dataset.letter;
+      const valid = state.entry.length === 0 ? !!AREAS[letter]
+        : state.entry.length === 1 ? 'ABC'.includes(letter) : false;
+      key.disabled = !valid;
+    });
   }
 
   function renderContext(item) {
@@ -1072,7 +1094,7 @@
       button.blur();
       submitNumerical(Number(button.dataset.index));
     });
-    $('#hint').textContent = 'Press A\u2013E to answer.';
+    $('#hint').textContent = touchUi() ? 'Tap an answer.' : 'Press A\u2013E to answer.';
   }
 
   function renderVerbal(item) {
@@ -1090,7 +1112,7 @@
       button.blur();
       submitVerbal(button.dataset.key);
     });
-    $('#hint').textContent = 'Press T, F or C.';
+    $('#hint').textContent = touchUi() ? 'Tap True, False or Cannot say.' : 'Press T, F or C.';
   }
 
   function renderJobSim(item) {
@@ -1108,7 +1130,9 @@
       button.blur();
       submitJobSim(Number(button.dataset.index));
     });
-    $('#hint').textContent = 'Press A\u2013E for the action you would most likely take.';
+    $('#hint').textContent = touchUi()
+      ? 'Tap the action you would most likely take.'
+      : 'Press A\u2013E for the action you would most likely take.';
   }
 
   function renderQuestion() {

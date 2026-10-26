@@ -1,7 +1,7 @@
 /* Offline cache. Bump CACHE when any cached file changes. */
 'use strict';
 
-const CACHE = 'paat-v1';
+const CACHE = 'paat-v2';
 const FILES = [
   './', 'index.html', 'style.css', 'app.js', 'passages.js', 'scenarios.js',
   'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
