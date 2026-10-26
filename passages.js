@@ -41,9 +41,9 @@ window.PASSAGES = [
     text: `Requests under the Freedom of Information Act must be made in writing and must include sufficient particulars to allow the record sought to be identified. A request may be made by post or by email. Where a request is unclear, the body may seek clarification from the requester, and the statutory period for responding does not begin until that clarification is received. Requests concerning records that contain personal information about the requester are dealt with under a separate provision and are not charged a search fee.`,
     items: [
       {
-        statement: 'A request sent by email is valid.',
+        statement: 'A request that gives sufficient particulars may be made by email.',
         key: 'T',
-        why: '"A request may be made by post or by email."',
+        why: '"A request may be made by post or by email", provided it is in writing and gives sufficient particulars.',
       },
       {
         statement: 'The response period begins when the request is first received, even if clarification is later sought.',
@@ -73,9 +73,9 @@ window.PASSAGES = [
         why: 'Seven years after closure is 2027, and files are transferred to the archive at that point.',
       },
       {
-        statement: 'A file concerning a person who is now 30 will be destroyed under the standard seven-year rule.',
+        statement: 'Archived files may be consulted by any member of staff.',
         key: 'C',
-        why: 'The passage does not say when that case closed, so the seven years cannot be worked out.',
+        why: 'The passage says nothing about who may access archived files.',
       },
       {
         statement: 'A retention period stops running while a file is the subject of legal proceedings.',
@@ -375,7 +375,7 @@ window.PASSAGES = [
         why: 'Stated directly.',
       },
       {
-        statement: `A near miss is reported even where nobody was hurt.`,
+        statement: `A near miss should be reported even where nobody was hurt.`,
         key: 'T',
         why: 'Near misses should be reported "even though no injury occurred".',
       },

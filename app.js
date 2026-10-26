@@ -266,6 +266,18 @@
     return Math.round(value).toLocaleString('en-IE');
   }
 
+  /* Exact percentage to one place: half away from zero, on integers, with no
+   * float drift. tie is true when the exact value sits on x.x5, where
+   * "to one decimal place" is arguable; generators resample rather than serve it. */
+  function pctOne(numerator, denominator) {
+    const scaled = Math.abs(numerator) * 1000;
+    const whole10 = Math.floor(scaled / denominator);
+    const twice = 2 * (scaled - whole10 * denominator);
+    const tenths = whole10 + (twice >= denominator ? 1 : 0);
+    const negative = numerator < 0 && tenths !== 0;
+    return { text: (negative ? '-' : '') + (tenths / 10).toFixed(1) + '%', tie: twice === denominator };
+  }
+
   function onePlace(value) {
     return Math.abs(value).toFixed(1) + '%';
   }
@@ -301,11 +313,18 @@
 
   function blockVolumes(rng) {
     const values = MONTHS.map(function () { return rng.int(900, 4200); });
-    const total = values.reduce(function (sum, value) { return sum + value; }, 0);
-    const average = Math.round(total / 6);
     const from = rng.int(1, 3);
     const to = from + rng.int(1, 5 - from);
+    /* Nudge June until neither the average nor the percentage sits on a
+     * rounding tie. */
+    while (values.reduce(function (sum, value) { return sum + value; }, 0) % 6 === 3 ||
+      pctOne(values[to] - values[from], values[from]).tie) {
+      values[5] += 1;
+    }
+    const total = values.reduce(function (sum, value) { return sum + value; }, 0);
+    const average = Math.round(total / 6);
     const change = ((values[to] - values[from]) / values[from]) * 100;
+    const changeText = pctOne(values[to] - values[from], values[from]).text;
     const otherBase = ((values[to] - values[from]) / values[to]) * 100;
 
     const html = dataTable(
@@ -337,7 +356,7 @@
         {
           prompt: 'What was the percentage change in applications from ' + MONTHS[from] +
             ' to ' + MONTHS[to] + ', to one decimal place?',
-          correct: change.toFixed(1) + '%',
+          correct: changeText,
           decoy: function (k) {
             const variants = [
               (-change).toFixed(1) + '%',
@@ -354,9 +373,9 @@
 
   function blockUnitCosts(rng) {
     const items = [
-      { name: 'Box files', unit: rng.int(8, 40) * 25, qty: rng.int(3, 24) },
-      { name: 'Printer paper', unit: rng.int(12, 60) * 25, qty: rng.int(4, 30) },
-      { name: 'Toner cartridges', unit: rng.int(60, 200) * 25, qty: rng.int(2, 9) },
+      { name: 'Box files', unit: rng.int(4, 20) * 50, qty: rng.int(3, 24) },
+      { name: 'Printer paper', unit: rng.int(6, 30) * 50, qty: rng.int(4, 30) },
+      { name: 'Toner cartridges', unit: rng.int(30, 100) * 50, qty: rng.int(2, 9) },
     ];
     const lines = items.map(function (item) { return item.unit * item.qty; });
     const spend = lines.reduce(function (sum, line) { return sum + line; }, 0);
@@ -416,7 +435,9 @@
     /* Concession revenue is at most 0.55 x 300 / 200 = 82.5% of standard, so
      * "standard exceeds concession" always holds. */
     const standardSold = rng.int(200, 640);
-    const concessionSold = rng.int(40, 300);
+    let concessionSold = rng.int(40, 300);
+    while (pctOne(concession * concessionSold,
+      standard * standardSold + concession * concessionSold).tie) concessionSold += 1;
     const standardRevenue = standard * standardSold;
     const concessionRevenue = concession * concessionSold;
     const totalRevenue = standardRevenue + concessionRevenue;
@@ -462,7 +483,7 @@
         },
         {
           prompt: 'What percentage of total revenue came from concessions, to one decimal place?',
-          correct: ((concessionRevenue / totalRevenue) * 100).toFixed(1) + '%',
+          correct: pctOne(concessionRevenue, totalRevenue).text,
           decoy: function (k) {
             const byCount = (concessionSold / (standardSold + concessionSold)) * 100;
             const actual = (concessionRevenue / totalRevenue) * 100;
@@ -533,7 +554,8 @@
     const uplift = rng.int(3, 14);
     const revised = base + Math.round((base * uplift) / 100);
     const share = rng.int(70, 97);
-    const spent = Math.round((revised * share) / 100);
+    let spent = Math.round((revised * share) / 100);
+    while (pctOne(spent, revised).tie) spent += 1000;
     const unspent = revised - spent;
     const shareOfBase = (spent / base) * 100;
     const actualShare = (spent / revised) * 100;
@@ -570,7 +592,7 @@
         },
         {
           prompt: 'What percentage of the revised allocation was spent, to one decimal place?',
-          correct: actualShare.toFixed(1) + '%',
+          correct: pctOne(spent, revised).text,
           decoy: function (k) {
             const variants = [
               shareOfBase.toFixed(1) + '%',
@@ -690,7 +712,7 @@
   }
 
   function blockDiscount(rng) {
-    const unit = rng.int(4, 40) * 25;
+    const unit = rng.int(3, 30) * 100;
     const qty = rng.int(60, 400);
     const tier = qty >= 250 ? 15 : qty >= 120 ? 10 : 5;
     const gross = unit * qty;
@@ -1688,6 +1710,8 @@
       makeNumericalPaper: makeNumericalPaper,
       makeVerbalPaper: makeVerbalPaper,
       makeJobSimPaper: makeJobSimPaper,
+      tablesMarkup: tablesMarkup,
+      areaItems: Object.fromEntries(Object.keys(AREAS).map(function (key) { return [key, AREAS[key][1]]; })),
     };
   }
 })();

@@ -124,6 +124,14 @@ action and the reasoning.
 If you disagree with a ranking, edit the file. It is plain data, and your
 judgement of a workplace scenario is not obviously worse than mine.
 
+## Tests
+
+`node test/invariants.test.js` checks that papers are well formed.
+`node test/answers.test.js` re-derives every numerical, checking and
+categorising answer from what is shown on screen and fails if the marked answer
+differs, if a figure needs rounding to the cent, or if a percentage sits exactly
+on a rounding tie. It also checks the job simulation marks.
+
 ## Deploying to GitHub Pages
 
 This folder is self-contained, so it can be published as its own repository.

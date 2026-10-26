@@ -63,7 +63,7 @@ window.SCENARIOS = [
       { text: 'Speak to them privately and agree a plan with review dates, without asking why it is happening.', mark: 3 },
       { text: 'Ask the colleague who has been covering to stop, and say nothing to anyone else.', mark: 2 },
       { text: 'Raise it at the next team meeting as a general reminder about deadlines.', mark: 1 },
-      { text: 'Issue a written warning about attendance at the next deadline.', mark: 0 },
+      { text: 'Issue a written warning without speaking to them first.', mark: 0 },
     ],
   },
   {
@@ -76,7 +76,7 @@ window.SCENARIOS = [
       { text: 'Ask the director to confirm the priority with your manager directly.', mark: 3 },
       { text: 'Do the Wednesday work first and tell your manager the briefing will be late.', mark: 2 },
       { text: 'Do both by working late and say nothing.', mark: 1 },
-      { text: 'Tell the director you cannot help and refer him to your manager.', mark: 0 },
+      { text: 'Tell the director you cannot help and refer the request to your manager.', mark: 0 },
     ],
   },
   {
@@ -86,8 +86,8 @@ window.SCENARIOS = [
     why: 'A personal data breach has a reporting route and a clock. Recall helps, but it is containment, not notification.',
     actions: [
       { text: 'Tell her to notify the data protection officer immediately, and do it yourself if she cannot.', mark: 4 },
-      { text: 'Ask the recipient to delete the email and confirm in writing that they have.', mark: 3 },
-      { text: 'Tell your manager and leave it with them.', mark: 2 },
+      { text: 'Tell your manager and leave it with them.', mark: 3 },
+      { text: 'Ask the recipient to delete the email and confirm in writing that they have.', mark: 2 },
       { text: 'Tell her to try recalling the email first, and see whether that worked.', mark: 1 },
       { text: 'Advise her to say nothing unless someone asks.', mark: 0 },
     ],
@@ -127,8 +127,8 @@ window.SCENARIOS = [
       { text: 'Tell finance in writing, then contact the supplier to arrange repayment.', mark: 4 },
       { text: 'Contact the supplier and ask for the money back, then tell finance.', mark: 3 },
       { text: 'Note it on the file and raise it at the next quarterly review.', mark: 2 },
-      { text: 'Deduct it from the next payment without telling anyone.', mark: 1 },
-      { text: 'Wait to see whether the supplier notices.', mark: 0 },
+      { text: 'Wait to see whether the supplier notices.', mark: 1 },
+      { text: 'Deduct it from the next payment without telling anyone.', mark: 0 },
     ],
   },
   {
@@ -138,10 +138,10 @@ window.SCENARIOS = [
     why: 'Give what you can support, be explicit about what you will confirm, and send it that day. Bluffing detail in front of senior officials is the thing to avoid.',
     actions: [
       { text: 'Give the update you can support, say clearly what you will confirm afterwards, and send it that day.', mark: 4 },
-      { text: 'Give the update from memory without flagging what you are unsure of.', mark: 3 },
+      { text: 'Ask a colleague in the room to cover the detail.', mark: 3 },
       { text: 'Give a broad update and avoid specifics.', mark: 2 },
       { text: 'Say you were not told and ask for the item to be deferred.', mark: 1 },
-      { text: 'Ask a colleague in the room to cover the detail.', mark: 0 },
+      { text: 'Give the update from memory without flagging what you are unsure of.', mark: 0 },
     ],
   },
   {
