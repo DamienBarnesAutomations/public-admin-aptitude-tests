@@ -1058,7 +1058,7 @@
     if (!entry) return;
     const area = state.entry[0] || '\u2014';
     const ref = state.entry[1] || '\u2014';
-    entry.innerHTML = `Area <b>${area}</b> &nbsp; Reference <b>${ref}</b>`;
+    entry.innerHTML = `Area <b>${area}</b> &nbsp; Ref <b>${ref}</b>`;
     const touch = touchUi();
     $('#hint').textContent = state.entry.length < 2
       ? (touch ? 'Tap the invoice area (A\u2013F), then the reference category (A\u2013C).'

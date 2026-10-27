@@ -568,16 +568,20 @@ button, select, summary { touch-action: manipulation; }
 
   /* Keep the timer in view while scrolling long tables. */
   .runbar {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 0.6rem;
     position: sticky;
     top: 0;
     z-index: 5;
     background: var(--bg);
     padding-top: 0.5rem;
+    padding-bottom: 0.4rem;
     margin-top: -0.5rem;
+    margin-bottom: 0.6rem;
   }
-  .run-count { grid-column: 1; grid-row: 2; }
-  .clock { grid-column: 2; grid-row: 1 / span 2; font-size: 1.25rem; }
+  .run-count { grid-column: 2; grid-row: 1; font-size: 0.8rem; }
+  .clock { grid-column: 3; grid-row: 1; font-size: 1.25rem; }
 
   .record col.c-label { width: 5.5rem; }
   .record col.c-key { width: 2rem; }
@@ -605,6 +609,34 @@ button, select, summary { touch-action: manipulation; }
   .dock .entry { margin-bottom: 0.5rem; }
   .dock .actions-bar { margin-top: 0.6rem; }
 
+  /* Categorising: record on top, answer and Clear/Submit on one row, keypad
+   * underneath, so the whole question fits a phone screen without scrolling. */
+  .dock:has(.entry) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: 0.5rem;
+    align-items: center;
+    padding-top: 0.5rem;
+  }
+  .dock:has(.entry) .log {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem 0.75rem;
+    margin: 0;
+  }
+  .dock:has(.entry) .log > div { display: flex; flex-direction: column; min-width: 0; }
+  .dock:has(.entry) .log dt { font-size: 0.7rem; line-height: 1.2; }
+  .dock:has(.entry) .log dd { margin: 0; line-height: 1.25; overflow-wrap: anywhere; }
+  .dock:has(.entry) .entry {
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  .dock:has(.entry) .keypad { grid-column: 1 / -1; grid-row: 3; }
+  .dock:has(.entry) .actions-bar { margin: 0; grid-row: 2; }
+  .dock:has(.entry) .actions-bar .btn { flex: 0 0 auto; padding-left: 0.9rem; padding-right: 0.9rem; }
+
   /* The menu is a long scroll on a phone: keep each card to its essentials. */
   .card { padding: 1rem; gap: 0.45rem; }
   .card p:not(.meta) {
@@ -615,13 +647,14 @@ button, select, summary { touch-action: manipulation; }
   }
   .lede { font-size: 0.95rem; }
 
-  .tables { padding: 0.75rem; }
+  .tables { padding: 0.5rem 0.65rem; margin-bottom: 0.6rem; }
   /* Two short tables side by side, the wide one underneath: the lookups,
    * the record and the answer controls then fit one phone screen. */
-  .tables-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; }
+  .tables-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem; }
   .lookup.wide { grid-column: 1 / -1; }
-  .lookup { font-size: 0.78rem; }
-  .lookup th, .lookup td { padding: 0.1rem 0.35rem 0.1rem 0; }
+  .lookup { font-size: 0.74rem; line-height: 1.3; }
+  .lookup caption { padding-bottom: 0.15rem; }
+  .lookup th, .lookup td { padding: 0.04rem 0.35rem 0.04rem 0; }
   .lookup.wide td.mono { white-space: nowrap; }
 
   .log { grid-template-columns: max-content 1fr; gap: 0.15rem 1rem; margin-bottom: 0.75rem; }
